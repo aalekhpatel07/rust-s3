@@ -65,9 +65,7 @@ impl<'a> Request for HyperRequest<'a> {
 
             request.body(Body::from(self.request_body()))?
         };
-        println!("request: {:#?}", request);
         let response = client.request(request).await?;
-        println!("response: {:#?}", response);
 
         if cfg!(feature = "fail-on-err") && !response.status().is_success() {
             let status = response.status().as_u16();
