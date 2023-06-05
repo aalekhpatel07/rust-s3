@@ -19,6 +19,9 @@ pub mod deserializer;
 pub mod serde_types;
 pub mod signing;
 
+#[cfg(test)]
+pub mod bucket_tests;
+
 pub mod error;
 pub mod request;
 pub mod utils;

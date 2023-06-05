@@ -1,11 +1,8 @@
-#[cfg(feature = "blocking")]
-use block_on_proc::block_on;
-#[cfg(feature = "tags")]
-use minidom::Element;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::bucket_ops::{BucketConfiguration, CreateBucketResponse};
+use crate::bucket_ops::BucketConfiguration;
+use crate::bucket::CreateBucketResponse;
 use crate::command::{Command, Multipart};
 use crate::creds::Credentials;
 use crate::region::Region;
@@ -16,6 +13,7 @@ use crate::request::ResponseDataStream;
 
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
+
 
 #[cfg(test)]
 mod test {
