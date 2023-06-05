@@ -2,8 +2,6 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use hmac::Mac;
 use std::collections::HashMap;
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-use std::pin::Pin;
 use time::format_description::well_known::Rfc2822;
 use time::OffsetDateTime;
 use url::Url;
@@ -20,11 +18,8 @@ use http::header::{
 use http::HeaderMap;
 use std::fmt::Write as _;
 
-#[cfg(feature = "with-async-std")]
-use futures_util::Stream;
-
-#[cfg(feature = "with-tokio")]
-use tokio_stream::Stream;
+#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
+use crate::request::async_common::ResponseDataStream;
 
 #[derive(Debug)]
 
@@ -32,24 +27,6 @@ pub struct ResponseData {
     bytes: Bytes,
     status_code: u16,
     headers: HashMap<String, String>,
-}
-
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-pub type DataStream = Pin<Box<dyn Stream<Item = StreamItem> + Send>>;
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-pub type StreamItem = Result<Bytes, S3Error>;
-
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-pub struct ResponseDataStream {
-    pub bytes: DataStream,
-    pub status_code: u16,
-}
-
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-impl ResponseDataStream {
-    pub fn bytes(&mut self) -> &mut DataStream {
-        &mut self.bytes
-    }
 }
 
 impl From<ResponseData> for Vec<u8> {
@@ -117,13 +94,13 @@ pub trait Request {
 
     async fn response(&self) -> Result<Self::Response, S3Error>;
     async fn response_data(&self, etag: bool) -> Result<ResponseData, S3Error>;
-    #[cfg(feature = "with-tokio")]
+    #[cfg(all(feature = "with-tokio", not(feature = "with-async-std")))]
     async fn response_data_to_writer<T: tokio::io::AsyncWrite + Send + Unpin>(
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error>;
-    #[cfg(feature = "with-async-std")]
-    async fn response_data_to_writer<T: futures_io::AsyncWrite + Send + Unpin>(
+    #[cfg(all(feature = "with-async-std", not(feature = "with-tokio")))]
+    async fn response_data_to_writer<T: futures::io::AsyncWrite + Send + Unpin>(
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error>;
@@ -132,7 +109,7 @@ pub trait Request {
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error>;
-    #[cfg(any(feature = "with-async-std", feature = "with-tokio"))]
+    #[cfg(not(feature = "sync"))]
     async fn response_data_to_stream(&self) -> Result<ResponseDataStream, S3Error>;
     async fn response_header(&self) -> Result<(Self::HeaderMap, u16), S3Error>;
     fn datetime(&self) -> OffsetDateTime;

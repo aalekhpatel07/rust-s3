@@ -1,11 +1,8 @@
-use async_std::io::{ReadExt, WriteExt};
-use async_std::stream::StreamExt;
 use bytes::Bytes;
-use futures_io::AsyncWrite;
-use futures_util::FutureExt;
 use std::collections::HashMap;
 
 use crate::bucket::Bucket;
+use crate::request::{AsyncWrite, AsyncWriteExt};
 use crate::command::Command;
 use crate::error::S3Error;
 use time::OffsetDateTime;
@@ -100,7 +97,8 @@ impl<'a> Request for SurfRequest<'a> {
                 Bytes::from("")
             }
         } else {
-            let body = match response.body_bytes().await {
+            let body_bytes = response.body_bytes().await;
+            let body = match body_bytes {
                 Ok(bytes) => Ok(Bytes::from(bytes)),
                 Err(e) => Err(S3Error::Surf(e.to_string())),
             };
@@ -113,7 +111,8 @@ impl<'a> Request for SurfRequest<'a> {
         ))
     }
 
-    async fn response_data_to_writer<T: AsyncWrite + Send + Unpin>(
+    #[cfg(all(feature = "with-async-std", not(feature = "with-tokio")))]
+    async fn response_data_to_writer<T: async_std::io::AsyncWrite + Send + Unpin>(
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error> {
@@ -148,6 +147,7 @@ impl<'a> Request for SurfRequest<'a> {
         Ok((header_map, status_code.into()))
     }
 
+    #[cfg(all(any(feature = "with-async-std", feature = "with-tokio"), not(feature = "sync")))]
     async fn response_data_to_stream(&self) -> Result<ResponseDataStream, S3Error> {
         let mut response = self.response().await?;
         let status_code = response.status();

@@ -8,12 +8,11 @@ use std::fs::File;
 
 use std::io::Read;
 use std::path::Path;
+use crate::request::{
+    AsyncRead, 
+    AsyncReadExt
+};
 
-#[cfg(feature = "with-tokio")]
-use tokio::io::{AsyncRead, AsyncReadExt};
-
-#[cfg(feature = "with-async-std")]
-use futures::io::{AsyncRead, AsyncReadExt};
 
 pub struct PutStreamResponse {
     status_code: u16,

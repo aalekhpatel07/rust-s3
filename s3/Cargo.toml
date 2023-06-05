@@ -90,16 +90,7 @@ block_on_proc = { version = "0.2", optional = true }
 [features]
 default = ["tags", "use-tokio-native-tls", "fail-on-err"]
 use-tokio-native-tls = ["with-tokio", "aws-creds/native-tls"]
-with-tokio = [
-    "hyper",
-    "hyper-tls",
-    "tokio",
-    "tokio/fs",
-    "tokio-stream",
-    "tokio-native-tls",
-    "native-tls",
-    "futures",
-]
+with-tokio = ["hyper", "hyper-tls", "tokio", "tokio/fs", "tokio-stream", "tokio-native-tls", "native-tls", "futures"]
 async-std-native-tls = ["with-async-std", "aws-creds/native-tls"]
 with-async-std = ["async-std", "surf", "futures-io", "futures-util", "futures"]
 sync = ["attohttpc", "maybe-async/is_sync"]
@@ -107,11 +98,7 @@ no-verify-ssl = []
 fail-on-err = []
 tokio-rustls-tls = ["with-tokio", "aws-creds/rustls-tls"]
 sync-native-tls = ["sync", "aws-creds/native-tls", "attohttpc/tls"]
-sync-native-tls-vendored = [
-    "sync",
-    "aws-creds/native-tls-vendored",
-    "attohttpc/tls-vendored",
-]
+sync-native-tls-vendored = ["sync", "aws-creds/native-tls-vendored", "attohttpc/tls-vendored"]
 sync-rustls-tls = ["sync", "aws-creds/rustls-tls", "attohttpc/tls-rustls"]
 blocking = ["block_on_proc", "tokio/rt", "tokio/rt-multi-thread"]
 tags = ["minidom"]

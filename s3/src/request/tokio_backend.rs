@@ -10,13 +10,21 @@ use maybe_async::maybe_async;
 use std::collections::HashMap;
 use time::OffsetDateTime;
 
-use super::request_trait::{Request, ResponseData, ResponseDataStream};
+use super::request_trait::{Request, ResponseData};
 use crate::bucket::Bucket;
 use crate::command::Command;
 use crate::command::HttpMethod;
 use crate::error::S3Error;
 
 use tokio_stream::StreamExt;
+
+
+pub use tokio_stream::Stream;
+pub use crate::request::tokio_backend::HyperRequest as RequestImpl;
+pub use tokio::io::{AsyncWrite, AsyncWriteExt};
+pub use tokio::io::AsyncRead;
+
+use crate::request::ResponseDataStream;
 
 // Temporary structure for making a request
 pub struct HyperRequest<'a> {
@@ -131,11 +139,11 @@ impl<'a> Request for HyperRequest<'a> {
         Ok(ResponseData::new(body_vec, status_code, response_headers))
     }
 
+    #[cfg(all(feature = "with-tokio", not(feature = "with-async-std")))]
     async fn response_data_to_writer<T: tokio::io::AsyncWrite + Send + Unpin>(
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error> {
-        use tokio::io::AsyncWriteExt;
         let response = self.response().await?;
 
         let status_code = response.status();
