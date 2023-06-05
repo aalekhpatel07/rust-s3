@@ -2,17 +2,24 @@ name: build
 
 on:
   push:
-    branches: [master, dev]
-  pull_request:
-    branches: [master, dev]
+    branches: [refactor, master]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: test
-        run: make ci
-      - name: test-all
-        run: make ci
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Test, Lint, and Build
+        run: |
+          make ci
+      - name: Generate docs.
+        run: |
+          make docs
+      - name: Deploy docs to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
