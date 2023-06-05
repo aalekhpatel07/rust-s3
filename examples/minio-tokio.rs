@@ -34,6 +34,7 @@ async fn main() -> Result<(), S3Error> {
     let test = b"I'm going to S3!";
 
     let response_data = bucket.put_object(s3_path, test).await?;
+    println!("response_data: {:#?}", response_data);
     assert_eq!(response_data.status_code(), 200);
 
     let response_data = bucket.get_object(s3_path).await?;

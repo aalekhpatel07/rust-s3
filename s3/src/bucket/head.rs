@@ -2,22 +2,6 @@ use crate::bucket::*;
 use crate::command::Command;
 use crate::request::RequestImpl;
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
 impl Bucket {
     /// Head object from S3.
     ///
@@ -36,22 +20,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let (head_object_result, code) = bucket.head_object("/test.png").await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let (head_object_result, code) = bucket.head_object("/test.png")?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let (head_object_result, code) = bucket.head_object_blocking("/test.png")?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn head_object<S: AsRef<str>>(
         &self,
         path: S,

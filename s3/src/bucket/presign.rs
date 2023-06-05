@@ -5,22 +5,6 @@ use crate::request::RequestImpl;
 use http::header::HeaderMap;
 use std::collections::HashMap;
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
 impl Bucket {
     /// Get a presigned url for getting object on a given path
     ///

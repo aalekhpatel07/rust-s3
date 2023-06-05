@@ -6,23 +6,8 @@ use crate::request::RequestImpl;
 use crate::serde_types::{ListBucketResult, ListMultipartUploadsResult};
 use awscreds::Credentials;
 use awsregion::Region;
+use serde::Deserialize;
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
 impl Bucket {
     /// Get a list of all existing buckets in the region
     /// that are accessible by the given credentials.
@@ -40,24 +25,13 @@ impl Bucket {
     /// };
     /// let credentials = Credentials::default()?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let response = Bucket::list_buckets(region, credentials).await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let response = Bucket::list_buckets(region, credentials)?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let response = Bucket::list_buckets_blocking(region, credentials)?;
     ///
     /// let found_buckets = response.bucket_names().collect::<Vec<String>>();
     /// println!("found buckets: {:#?}", found_buckets);
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn list_buckets(
         region: Region,
         credentials: Credentials,
@@ -84,23 +58,12 @@ impl Bucket {
     ///
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let exists = bucket.exists().await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let exists = bucket.exists()?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let exists = bucket.exists_blocking()?;
     ///
     /// assert_eq!(exists, true);
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn exists(&self) -> Result<bool, S3Error> {
         let credentials = self
             .credentials
@@ -116,7 +79,6 @@ impl Bucket {
             .contains(&self.name))
     }
 
-    #[maybe_async::maybe_async]
     pub async fn list_page(
         &self,
         prefix: String,
@@ -168,22 +130,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let results = bucket.list("/".to_string(), Some("/".to_string())).await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let results = bucket.list("/".to_string(), Some("/".to_string()))?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let results = bucket.list_blocking("/".to_string(), Some("/".to_string()))?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn list(
         &self,
         prefix: String,
@@ -213,7 +164,6 @@ impl Bucket {
         Ok(results)
     }
 
-    #[maybe_async::maybe_async]
     pub async fn list_multiparts_uploads_page(
         &self,
         prefix: Option<&str>,
@@ -252,22 +202,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let results = bucket.list_multiparts_uploads(Some("/"), Some("/")).await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let results = bucket.list_multiparts_uploads(Some("/"), Some("/"))?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let results = bucket.list_multiparts_uploads_blocking(Some("/"), Some("/"))?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn list_multiparts_uploads(
         &self,
         prefix: Option<&str>,

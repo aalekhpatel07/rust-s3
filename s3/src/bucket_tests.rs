@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod test {
 
+    use crate::BucketConfiguration;
     use crate::creds::Credentials;
     use crate::region::Region;
-    use crate::serde_types::CorsConfiguration;
-    use crate::serde_types::CorsRule;
     use crate::Bucket;
-    use crate::BucketConfiguration;
     use crate::Tag;
+    use crate::serde_types::CorsRule;
     use http::header::HeaderName;
     use http::HeaderMap;
     use std::env;
+    use crate::bucket::CorsConfiguration;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -50,7 +50,7 @@ mod test {
     }
 
     fn test_minio_credentials() -> Credentials {
-        Credentials::new(Some("test"), Some("test1234"), None, None, None).unwrap()
+        Credentials::new(Some("minioadmin"), Some("minioadmin"), None, None, None).unwrap()
     }
 
     fn test_digital_ocean_credentials() -> Credentials {
@@ -139,7 +139,6 @@ mod test {
         (0..size).map(|_| 33).collect()
     }
 
-    #[maybe_async::maybe_async]
     async fn put_head_get_delete_object(bucket: Bucket, head: bool) {
         let s3_path = "/+test.file";
         let test: Vec<u8> = object(3072);
@@ -253,69 +252,27 @@ mod test {
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_big_aws_put_head_get_delete_object() {
         streaming_test_put_get_delete_big_object(test_aws_bucket()).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(
-            all(
-                not(feature = "sync"),
-                not(feature = "tokio-rustls-tls"),
-                feature = "with-tokio"
-            ),
-            tokio::test
-        ),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_big_gc_put_head_get_delete_object() {
         streaming_test_put_get_delete_big_object(test_gc_bucket()).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_big_minio_put_head_get_delete_object() {
         streaming_test_put_get_delete_big_object(test_minio_bucket()).await;
     }
 
     // Test multi-part upload
-    #[maybe_async::maybe_async]
     async fn streaming_test_put_get_delete_big_object(bucket: Bucket) {
-        #[cfg(feature = "with-async-std")]
-        use async_std::fs::File;
-        #[cfg(feature = "with-async-std")]
-        use async_std::io::WriteExt;
-        #[cfg(feature = "with-async-std")]
-        use async_std::stream::StreamExt;
-        #[cfg(feature = "with-tokio")]
         use futures::StreamExt;
-        #[cfg(not(any(feature = "with-tokio", feature = "with-async-std")))]
-        use std::fs::File;
-        #[cfg(not(any(feature = "with-tokio", feature = "with-async-std")))]
-        use std::io::Write;
-        #[cfg(feature = "with-tokio")]
         use tokio::fs::File;
-        #[cfg(feature = "with-tokio")]
         use tokio::io::AsyncWriteExt;
 
         init();
@@ -328,11 +285,15 @@ mod test {
         file.write_all(&content).await.unwrap();
         let mut reader = File::open(local_path).await.unwrap();
 
-        let response = bucket
-            .put_object_stream(&mut reader, remote_path)
-            .await
-            .unwrap();
-        assert_eq!(response.status_code(), 200);
+        {
+            let response = bucket
+                .put_object_stream(&mut reader, remote_path)
+                .await
+                .unwrap();
+            assert_eq!(response.status_code(), 200);
+        }
+
+
         let mut writer = Vec::new();
         let code = bucket
             .get_object_to_writer(remote_path, &mut writer)
@@ -343,7 +304,6 @@ mod test {
         assert_eq!(content.len(), writer.len());
         assert_eq!(content.len(), 20_000_000);
 
-        #[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
         {
             let mut response_data_stream = bucket.get_object_stream(remote_path).await.unwrap();
 
@@ -361,73 +321,34 @@ mod test {
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_aws_put_head_get_delete_object() {
         streaming_test_put_get_delete_small_object(test_aws_bucket()).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(
-            all(
-                not(feature = "sync"),
-                not(feature = "tokio-rustls-tls"),
-                feature = "with-tokio"
-            ),
-            tokio::test
-        ),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_gc_put_head_get_delete_object() {
         streaming_test_put_get_delete_small_object(test_gc_bucket()).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_r2_put_head_get_delete_object() {
         streaming_test_put_get_delete_small_object(test_r2_bucket()).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn streaming_minio_put_head_get_delete_object() {
         streaming_test_put_get_delete_small_object(test_minio_bucket()).await;
     }
 
-    #[maybe_async::maybe_async]
     async fn streaming_test_put_get_delete_small_object(bucket: Bucket) {
         init();
         let remote_path = "+stream_test_small";
         let content: Vec<u8> = object(1000);
-        #[cfg(feature = "with-tokio")]
         let mut reader = std::io::Cursor::new(&content);
-        #[cfg(feature = "with-async-std")]
-        let mut reader = async_std::io::Cursor::new(&content);
 
         let response = bucket
             .put_object_stream(&mut reader, remote_path)
@@ -446,188 +367,26 @@ mod test {
         assert_eq!(response_data.status_code(), 204);
     }
 
-    #[cfg(feature = "blocking")]
-    fn put_head_get_list_delete_object_blocking(bucket: Bucket) {
-        let s3_path = "/test_blocking.file";
-        let s3_path_2 = "/test_blocking.file2";
-        let s3_path_3 = "/test_blocking.file3";
-        let test: Vec<u8> = object(3072);
-
-        // Test PutObject
-        let response_data = bucket.put_object_blocking(s3_path, &test).unwrap();
-        assert_eq!(response_data.status_code(), 200);
-
-        // Test GetObject
-        let response_data = bucket.get_object_blocking(s3_path).unwrap();
-        assert_eq!(response_data.status_code(), 200);
-        assert_eq!(test, response_data.as_slice());
-
-        // Test GetObject with a range
-        let response_data = bucket
-            .get_object_range_blocking(s3_path, 100, Some(1000))
-            .unwrap();
-        assert_eq!(response_data.status_code(), 206);
-        assert_eq!(test[100..1001].to_vec(), response_data.as_slice());
-
-        // Test HeadObject
-        let (head_object_result, code) = bucket.head_object_blocking(s3_path).unwrap();
-        assert_eq!(code, 200);
-        assert_eq!(
-            head_object_result.content_type.unwrap(),
-            "application/octet-stream".to_owned()
-        );
-        // println!("{:?}", head_object_result);
-
-        // Put some additional objects, so that we can test ListObjects
-        let response_data = bucket.put_object_blocking(s3_path_2, &test).unwrap();
-        assert_eq!(response_data.status_code(), 200);
-        let response_data = bucket.put_object_blocking(s3_path_3, &test).unwrap();
-        assert_eq!(response_data.status_code(), 200);
-
-        // Test ListObjects, with continuation
-        let (result, code) = bucket
-            .list_page_blocking(
-                "test_blocking.".to_string(),
-                Some("/".to_string()),
-                None,
-                None,
-                Some(2),
-            )
-            .unwrap();
-        assert_eq!(code, 200);
-        assert_eq!(result.contents.len(), 2);
-        assert_eq!(result.contents[0].key, s3_path[1..]);
-        assert_eq!(result.contents[1].key, s3_path_2[1..]);
-
-        let cont_token = result.next_continuation_token.unwrap();
-
-        let (result, code) = bucket
-            .list_page_blocking(
-                "test_blocking.".to_string(),
-                Some("/".to_string()),
-                Some(cont_token),
-                None,
-                Some(2),
-            )
-            .unwrap();
-        assert_eq!(code, 200);
-        assert_eq!(result.contents.len(), 1);
-        assert_eq!(result.contents[0].key, s3_path_3[1..]);
-        assert!(result.next_continuation_token.is_none());
-
-        // cleanup (and test Delete)
-        let response_data = bucket.delete_object_blocking(s3_path).unwrap();
-        assert_eq!(code, 200);
-        let response_data = bucket.delete_object_blocking(s3_path_2).unwrap();
-        assert_eq!(code, 200);
-        let response_data = bucket.delete_object_blocking(s3_path_3).unwrap();
-        assert_eq!(code, 200);
-    }
-
     #[ignore]
-    #[cfg(all(
-        any(feature = "with-tokio", feature = "with-async-std"),
-        feature = "blocking"
-    ))]
-    #[test]
-    fn aws_put_head_get_delete_object_blocking() {
-        put_head_get_list_delete_object_blocking(test_aws_bucket())
-    }
-
-    #[ignore]
-    #[cfg(all(
-        any(feature = "with-tokio", feature = "with-async-std"),
-        feature = "blocking"
-    ))]
-    #[test]
-    fn gc_put_head_get_delete_object_blocking() {
-        put_head_get_list_delete_object_blocking(test_gc_bucket())
-    }
-
-    #[ignore]
-    #[cfg(all(
-        any(feature = "with-tokio", feature = "with-async-std"),
-        feature = "blocking"
-    ))]
-    #[test]
-    fn wasabi_put_head_get_delete_object_blocking() {
-        put_head_get_list_delete_object_blocking(test_wasabi_bucket())
-    }
-
-    #[ignore]
-    #[cfg(all(
-        any(feature = "with-tokio", feature = "with-async-std"),
-        feature = "blocking"
-    ))]
-    #[test]
-    fn minio_put_head_get_delete_object_blocking() {
-        put_head_get_list_delete_object_blocking(test_minio_bucket())
-    }
-
-    #[ignore]
-    #[cfg(all(
-        any(feature = "with-tokio", feature = "with-async-std"),
-        feature = "blocking"
-    ))]
-    #[test]
-    fn digital_ocean_put_head_get_delete_object_blocking() {
-        put_head_get_list_delete_object_blocking(test_digital_ocean_bucket())
-    }
-
-    #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn aws_put_head_get_delete_object() {
         put_head_get_delete_object(test_aws_bucket(), true).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(
-            all(
-                not(any(feature = "sync", feature = "tokio-rustls-tls")),
-                feature = "with-tokio"
-            ),
-            tokio::test
-        ),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn gc_test_put_head_get_delete_object() {
         put_head_get_delete_object(test_gc_bucket(), true).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn wasabi_test_put_head_get_delete_object() {
         put_head_get_delete_object(test_wasabi_bucket(), true).await;
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn minio_test_put_head_get_delete_object() {
         put_head_get_delete_object(test_minio_bucket(), true).await;
     }
@@ -647,14 +406,7 @@ mod test {
     // }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn r2_test_put_head_get_delete_object() {
         put_head_get_delete_object(test_r2_bucket(), false).await;
     }
@@ -699,15 +451,8 @@ mod test {
         assert!(url.contains("/test/test.file?"))
     }
 
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
     #[ignore]
+    #[tokio::test]
     async fn test_bucket_create_delete_default_region() {
         let config = BucketConfiguration::default();
         let response = Bucket::create(
@@ -728,14 +473,7 @@ mod test {
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn test_bucket_create_delete_non_default_region() {
         let config = BucketConfiguration::default();
         let response = Bucket::create(
@@ -756,14 +494,7 @@ mod test {
     }
 
     #[ignore]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn test_bucket_create_delete_non_default_region_public() {
         let config = BucketConfiguration::public();
         let response = Bucket::create(
@@ -808,15 +539,8 @@ mod test {
         assert_eq!(bucket.request_timeout(), Some(Duration::from_secs(10)));
     }
 
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
     #[ignore]
+    #[tokio::test]
     async fn test_put_bucket_cors() {
         let bucket = test_aws_bucket();
         let rule = CorsRule::new(

@@ -3,22 +3,6 @@ use crate::command::Command;
 use crate::error::S3Error;
 use crate::request::RequestImpl;
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
 impl Bucket {
     /// Copy file from an S3 path, internally within the same bucket.
     ///
@@ -37,17 +21,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let code = bucket.copy_object_internal("/from.file", "/to.file").await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let code = bucket.copy_object_internal("/from.file", "/to.file")?;
     ///
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn copy_object_internal<F: AsRef<str>, T: AsRef<str>>(
         &self,
         from: F,
@@ -61,7 +39,6 @@ impl Bucket {
         self.copy_object(fq_from, to).await
     }
 
-    #[maybe_async::maybe_async]
     async fn copy_object<F: AsRef<str>, T: AsRef<str>>(
         &self,
         from: F,

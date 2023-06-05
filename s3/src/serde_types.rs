@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 #[derive(Deserialize, Debug)]
 pub struct InitiateMultipartUploadResponse {
     #[serde(rename = "Bucket")]

@@ -5,7 +5,6 @@ use crate::request::ResponseData;
 use crate::{bucket::CHUNK_SIZE, serde_types::HeadObjectResult};
 
 use std::fs::File;
-
 use crate::request::{AsyncRead, AsyncReadExt};
 use std::io::Read;
 use std::path::Path;
@@ -70,7 +69,6 @@ pub fn read_chunk<R: Read>(reader: &mut R) -> Result<Vec<u8>, S3Error> {
     Ok(chunk)
 }
 
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
 pub async fn read_chunk_async<R: AsyncRead + Unpin>(reader: &mut R) -> Result<Vec<u8>, S3Error> {
     let mut chunk = Vec::with_capacity(CHUNK_SIZE);
     let mut take = reader.take(CHUNK_SIZE as u64);

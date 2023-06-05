@@ -18,9 +18,6 @@ use http::header::{
 use http::HeaderMap;
 use std::fmt::Write as _;
 
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-use crate::request::async_common::ResponseDataStream;
-
 #[derive(Debug)]
 
 pub struct ResponseData {
@@ -87,29 +84,33 @@ impl fmt::Display for ResponseData {
     }
 }
 
-#[maybe_async::maybe_async]
+use std::pin::Pin;
+
+pub type DataStream = Pin<Box<dyn futures::Stream<Item = StreamItem> + Send>>;
+pub type StreamItem = Result<bytes::Bytes, crate::error::S3Error>;
+
+pub struct ResponseDataStream {
+    pub bytes: DataStream,
+    pub status_code: u16,
+}
+
+impl ResponseDataStream {
+    pub fn bytes(&mut self) -> &mut DataStream {
+        &mut self.bytes
+    }
+}
+
+#[async_trait::async_trait]
 pub trait Request {
     type Response;
     type HeaderMap;
 
     async fn response(&self) -> Result<Self::Response, S3Error>;
     async fn response_data(&self, etag: bool) -> Result<ResponseData, S3Error>;
-    #[cfg(all(feature = "with-tokio", not(feature = "with-async-std")))]
     async fn response_data_to_writer<T: tokio::io::AsyncWrite + Send + Unpin>(
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error>;
-    #[cfg(all(feature = "with-async-std", not(feature = "with-tokio")))]
-    async fn response_data_to_writer<T: futures::io::AsyncWrite + Send + Unpin>(
-        &self,
-        writer: &mut T,
-    ) -> Result<u16, S3Error>;
-    #[cfg(feature = "sync")]
-    fn response_data_to_writer<T: std::io::Write + Send>(
-        &self,
-        writer: &mut T,
-    ) -> Result<u16, S3Error>;
-    #[cfg(not(feature = "sync"))]
     async fn response_data_to_stream(&self) -> Result<ResponseDataStream, S3Error>;
     async fn response_header(&self) -> Result<(Self::HeaderMap, u16), S3Error>;
     fn datetime(&self) -> OffsetDateTime;
@@ -130,24 +131,13 @@ pub trait Request {
     }
 
     fn request_body(&self) -> Vec<u8> {
-        if let Command::PutObject { content, .. } = self.command() {
-            Vec::from(content)
-        } else if let Command::PutObjectTagging { tags } = self.command() {
-            Vec::from(tags)
-        } else if let Command::UploadPart { content, .. } = self.command() {
-            Vec::from(content)
-        } else if let Command::CompleteMultipartUpload { data, .. } = &self.command() {
-            let body = data.to_string();
-            println!("CompleteMultipartUpload: {}", body);
-            body.as_bytes().to_vec()
-        } else if let Command::CreateBucket { config } = &self.command() {
-            if let Some(payload) = config.location_constraint_payload() {
-                Vec::from(payload)
-            } else {
-                Vec::new()
-            }
-        } else {
-            Vec::new()
+        match self.command() {
+            Command::PutObject { content, .. } => Vec::from(content),
+            Command::PutObjectTagging { tags } => Vec::from(tags),
+            Command::UploadPart { content, .. } => Vec::from(content),
+            Command::CompleteMultipartUpload { data, .. } => Vec::from(data.to_string().as_bytes().to_vec()),
+            Command::CreateBucket { config } => config.location_constraint_payload().map(Vec::from).unwrap_or_default(),
+            _ => vec![]
         }
     }
 

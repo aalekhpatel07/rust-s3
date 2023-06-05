@@ -7,9 +7,6 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-#[cfg(feature = "blocking")]
-pub(crate) use block_on_proc::block_on;
-
 pub use std::io::Read;
 
 pub use presign::*;

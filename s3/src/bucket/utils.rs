@@ -6,22 +6,6 @@ use crate::bucket::*;
 use crate::command::Command;
 use crate::request::RequestImpl;
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
 impl Bucket {
     /// Get path_style field of the Bucket struct
     pub fn is_path_style(&self) -> bool {
@@ -234,22 +218,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let (region, status_code) = bucket.location().await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let (region, status_code) = bucket.location()?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let (region, status_code) = bucket.location_blocking()?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn location(&self) -> Result<(Region, u16), S3Error> {
         let request = RequestImpl::new(self, "?location", Command::GetBucketLocation)?;
         let response_data = request.response_data(false).await?;

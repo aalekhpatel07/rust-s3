@@ -27,22 +27,6 @@ impl CreateBucketResponse {
     }
 }
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
 impl Bucket {
     /// Create a new `Bucket` and instantiate it
     ///
@@ -59,24 +43,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let config = BucketConfiguration::default();
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let create_bucket_response = Bucket::create(bucket_name, region, credentials, config).await?;
     ///
-    /// // `sync` fature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let create_bucket_response = Bucket::create(bucket_name, region, credentials, config)?;
-    ///
-    /// # let region: Region = "us-east-1".parse()?;
-    /// # let credentials = Credentials::default()?;
-    /// # let config = BucketConfiguration::default();
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let create_bucket_response = Bucket::create_blocking(bucket_name, region, credentials, config)?;
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn create(
         name: &str,
         region: Region,
@@ -112,24 +83,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let config = BucketConfiguration::default();
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let create_bucket_response = Bucket::create_with_path_style(bucket_name, region, credentials, config).await?;
     ///
-    /// // `sync` fature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let create_bucket_response = Bucket::create_with_path_style(bucket_name, region, credentials, config)?;
-    ///
-    /// # let region: Region = "us-east-1".parse()?;
-    /// # let credentials = Credentials::default()?;
-    /// # let config = BucketConfiguration::default();
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let create_bucket_response = Bucket::create_with_path_style_blocking(bucket_name, region, credentials, config)?;
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn create_with_path_style(
         name: &str,
         region: Region,

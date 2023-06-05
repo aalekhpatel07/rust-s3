@@ -1,25 +1,11 @@
-use crate::bucket::{Bucket, Request, Tag};
+use crate::bucket::{Bucket, Request};
 use crate::command::Command;
 use crate::error::S3Error;
-use crate::request::{AsyncWrite, RequestImpl};
-use crate::request::{ResponseData, ResponseDataStream};
+use crate::request::RequestImpl;
+use crate::request::ResponseData;
 
-#[cfg_attr(
-    all(
-        not(feature = "with-async-std"),
-        feature = "with-tokio",
-        feature = "blocking"
-    ),
-    block_on("tokio")
-)]
-#[cfg_attr(
-    all(
-        not(feature = "with-tokio"),
-        feature = "with-async-std",
-        feature = "blocking"
-    ),
-    block_on("async-std")
-)]
+use crate::request::{ResponseDataStream, AsyncWrite};
+
 impl Bucket {
     /// Gets file from an S3 path.
     ///
@@ -38,21 +24,10 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let response_data = bucket.get_object("/test.file").await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let response_data = bucket.get_object("/test.file")?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let response_data = bucket.get_object_blocking("/test.file")?;
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn get_object<S: AsRef<str>>(&self, path: S) -> Result<ResponseData, S3Error> {
         let command = Command::GetObject;
         let request = RequestImpl::new(self, path.as_ref(), command)?;
@@ -76,21 +51,10 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let response_data = bucket.get_object_torrent("/test.file").await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let response_data = bucket.get_object_torrent("/test.file")?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let response_data = bucket.get_object_torrent_blocking("/test.file")?;
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn get_object_torrent<S: AsRef<str>>(
         &self,
         path: S,
@@ -117,22 +81,11 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let response_data = bucket.get_object_range("/test.file", 0, Some(31)).await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let response_data = bucket.get_object_range("/test.file", 0, Some(31))?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let response_data = bucket.get_object_range_blocking("/test.file", 0, Some(31))?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::maybe_async]
     pub async fn get_object_range<S: AsRef<str>>(
         &self,
         path: S,
@@ -173,22 +126,11 @@ impl Bucket {
     /// let start = 0;
     /// let end = Some(1024);
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let status_code = bucket.get_object_range_to_writer("/test.file", start, end, &mut async_output_file).await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let status_code = bucket.get_object_range_to_writer("/test.file", start, end, &mut output_file)?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features. Based of the async branch
-    /// #[cfg(feature = "blocking")]
-    /// let status_code = bucket.get_object_range_to_writer_blocking("/test.file", start, end, &mut async_output_file)?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::async_impl]
     pub async fn get_object_range_to_writer<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
         &self,
         path: S,
@@ -203,23 +145,6 @@ impl Bucket {
         let command = Command::GetObjectRange { start, end };
         let request = RequestImpl::new(self, path.as_ref(), command)?;
         request.response_data_to_writer(writer).await
-    }
-
-    #[maybe_async::sync_impl]
-    pub async fn get_object_range_to_writer<T: std::io::Write + Send, S: AsRef<str>>(
-        &self,
-        path: S,
-        start: u64,
-        end: Option<u64>,
-        writer: &mut T,
-    ) -> Result<u16, S3Error> {
-        if let Some(end) = end {
-            assert!(start < end);
-        }
-
-        let command = Command::GetObjectRange { start, end };
-        let request = RequestImpl::new(self, path.as_ref(), command)?;
-        request.response_data_to_writer(writer)
     }
 
     /// Stream file from S3 path to a local file, generic over T: Write.
@@ -244,22 +169,11 @@ impl Bucket {
     /// #[cfg(feature = "with-async-std")]
     /// let mut async_output_file = async_std::fs::File::create("async_output_file").await.expect("Unable to create file");
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let status_code = bucket.get_object_to_writer("/test.file", &mut async_output_file).await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let status_code = bucket.get_object_to_writer("/test.file", &mut output_file)?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features. Based of the async branch
-    /// #[cfg(feature = "blocking")]
-    /// let status_code = bucket.get_object_to_writer_blocking("/test.file", &mut async_output_file)?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[maybe_async::async_impl]
     pub async fn get_object_to_writer<T: AsyncWrite + Send + Unpin, S: AsRef<str>>(
         &self,
         path: S,
@@ -270,17 +184,6 @@ impl Bucket {
         request.response_data_to_writer(writer).await
     }
 
-    #[maybe_async::sync_impl]
-    pub fn get_object_to_writer<T: std::io::Write + Send, S: AsRef<str>>(
-        &self,
-        path: S,
-        writer: &mut T,
-    ) -> Result<u16, S3Error> {
-        let command = Command::GetObject;
-        let request = RequestImpl::new(self, path.as_ref(), command)?;
-        request.response_data_to_writer(writer)
-    }
-
     /// Stream file from S3 path to a local file using an async stream.
     ///
     /// # Example
@@ -289,14 +192,8 @@ impl Bucket {
     /// use s3::bucket::Bucket;
     /// use s3::creds::Credentials;
     /// use anyhow::Result;
-    /// #[cfg(feature = "with-tokio")]
     /// use tokio_stream::StreamExt;
-    /// #[cfg(feature = "with-tokio")]
     /// use tokio::io::AsyncWriteExt;
-    /// #[cfg(feature = "with-async-std")]
-    /// use futures_util::StreamExt;
-    /// #[cfg(feature = "with-async-std")]
-    /// use futures_util::AsyncWriteExt;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<()> {
@@ -309,10 +206,7 @@ impl Bucket {
     ///
     /// let mut response_data_stream = bucket.get_object_stream(path).await?;
     ///
-    /// #[cfg(feature = "with-tokio")]
     /// let mut async_output_file = tokio::fs::File::create("async_output_file").await.expect("Unable to create file");
-    /// #[cfg(feature = "with-async-std")]
-    /// let mut async_output_file = async_std::fs::File::create("async_output_file").await.expect("Unable to create file");
     ///
     /// while let Some(chunk) = response_data_stream.bytes().next().await {
     ///     async_output_file.write_all(&chunk.unwrap()).await?;
@@ -322,7 +216,6 @@ impl Bucket {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
     pub async fn get_object_stream<S: AsRef<str>>(
         &self,
         path: S,
@@ -349,27 +242,15 @@ impl Bucket {
     /// let credentials = Credentials::default()?;
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     ///
-    /// // Async variant with `tokio` or `async-std` features
     /// let response_data = bucket.get_object_tagging("/test.file").await?;
-    ///
-    /// // `sync` feature will produce an identical method
-    /// #[cfg(feature = "sync")]
-    /// let response_data = bucket.get_object_tagging("/test.file")?;
-    ///
-    /// // Blocking variant, generated with `blocking` feature in combination
-    /// // with `tokio` or `async-std` features.
-    /// #[cfg(feature = "blocking")]
-    /// let response_data = bucket.get_object_tagging_blocking("/test.file")?;
     /// #
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(feature = "tags")]
-    #[maybe_async::maybe_async]
     pub async fn get_object_tagging<S: AsRef<str>>(
         &self,
         path: S,
-    ) -> Result<(Vec<Tag>, u16), S3Error> {
+    ) -> Result<(Vec<crate::Tag>, u16), S3Error> {
         let command = Command::GetObjectTagging {};
         let request = RequestImpl::new(self, path.as_ref(), command)?;
         let result = request.response_data(false).await?;
@@ -406,7 +287,7 @@ impl Bucket {
                                 } else {
                                     "Could not parse Values from Tag".to_string()
                                 };
-                                tags.push(Tag { key, value });
+                                tags.push(crate::Tag { key, value });
                             }
                         }
                     }
