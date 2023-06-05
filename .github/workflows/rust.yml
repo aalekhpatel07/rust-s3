@@ -19,7 +19,20 @@ jobs:
       - name: Generate docs.
         run: |
           make docs
-      - name: Deploy docs to gh-pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Archive generated docs for gh pages.
+        uses: actions/upload-pages-artifact@v1
         with:
-          folder: docs
+          path: docs/
+  deploy-pages:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
