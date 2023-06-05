@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod test {
 
-    use crate::BucketConfiguration;
+    use crate::bucket::CorsConfiguration;
     use crate::creds::Credentials;
     use crate::region::Region;
-    use crate::Bucket;
-    use crate::Tag;
     use crate::serde_types::CorsRule;
+    use crate::Bucket;
+    use crate::BucketConfiguration;
+    use crate::Tag;
     use http::header::HeaderName;
     use http::HeaderMap;
     use std::env;
-    use crate::bucket::CorsConfiguration;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -292,7 +292,6 @@ mod test {
                 .unwrap();
             assert_eq!(response.status_code(), 200);
         }
-
 
         let mut writer = Vec::new();
         let code = bucket

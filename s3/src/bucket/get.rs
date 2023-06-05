@@ -4,7 +4,7 @@ use crate::error::S3Error;
 use crate::request::RequestImpl;
 use crate::request::ResponseData;
 
-use crate::request::{ResponseDataStream, AsyncWrite};
+use crate::request::{AsyncWrite, ResponseDataStream};
 
 impl Bucket {
     /// Gets file from an S3 path.

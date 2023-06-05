@@ -1,3 +1,4 @@
+use crate::bucket::CorsConfiguration;
 use crate::bucket::{
     error_from_response_data, Bucket, CompleteMultipartUploadData, InitiateMultipartUploadResponse,
     Part, Read, Request, CHUNK_SIZE,
@@ -5,7 +6,6 @@ use crate::bucket::{
 use crate::command::{Command, Multipart};
 use crate::error::S3Error;
 use crate::request::{RequestImpl, ResponseData};
-use crate::bucket::CorsConfiguration;
 
 use crate::bucket::PutStreamResponse;
 use crate::request::AsyncRead;
@@ -325,7 +325,7 @@ impl Bucket {
     /// let content = "I want to go to S3".as_bytes();
     ///
     /// let response_data = bucket.put_object_with_content_type("/test.file", content, "text/plain").await?;
-    /// # 
+    /// #
     /// # Ok(())
     /// # }
     /// ```

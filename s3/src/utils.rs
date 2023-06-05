@@ -4,8 +4,8 @@ use crate::error::S3Error;
 use crate::request::ResponseData;
 use crate::{bucket::CHUNK_SIZE, serde_types::HeadObjectResult};
 
-use std::fs::File;
 use crate::request::{AsyncRead, AsyncReadExt};
+use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
