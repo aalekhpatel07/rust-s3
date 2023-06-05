@@ -135,7 +135,7 @@ pub trait Request {
             Command::PutObject { content, .. } => Vec::from(content),
             Command::PutObjectTagging { tags } => Vec::from(tags),
             Command::UploadPart { content, .. } => Vec::from(content),
-            Command::CompleteMultipartUpload { data, .. } => Vec::from(data.to_string().as_bytes().to_vec()),
+            Command::CompleteMultipartUpload { data, .. } => data.to_string().as_bytes().to_vec(),
             Command::CreateBucket { config } => config.location_constraint_payload().map(Vec::from).unwrap_or_default(),
             _ => vec![]
         }
