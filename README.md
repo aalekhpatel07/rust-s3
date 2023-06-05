@@ -7,7 +7,7 @@
 
 
 > **Note**: This repository is a fork of [rust-s3](https://github.com/durch/rust-s3) but with a lot of simplifications like only tokio support with async, no blocking implementations, and next to zero macro usage. The only reason this fork exists is because the macro expansions are fairly inaccurate and make development frustrating for me. Plus, its pretty common to use async code when consuming an S3 API, so I don't feel the need of carrying all the "mutual exclusive macro" dead weights around for every minor feature.
-## rust-s3-async [[docs](https://docs.rs/rust-s3-async/latest/rust-s3-async)]
+## rust-s3-async [docs](https://docs.rs/rust-s3-async/latest/s3/)
 
 Rust library for working with Amazon S3 or arbitrary S3 compatible APIs, fully compatible with **async/await** and `futures ^0.3`.
 
