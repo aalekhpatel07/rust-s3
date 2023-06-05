@@ -31,7 +31,7 @@ impl Bucket {
     /// requests, or no (infinity) timeout if `None`.  Defaults to
     /// 30 seconds.
     ///
-    /// Only the [`attohttpc`] and the [`hyper`] backends obey this option;
+    /// Only the [`hyper`] backend obeys this option;
     /// async code may instead await with a timeout.
     pub fn set_request_timeout(&mut self, timeout: Option<Duration>) {
         self.request_timeout = timeout;
