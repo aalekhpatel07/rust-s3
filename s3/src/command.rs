@@ -51,7 +51,7 @@ impl<'a> Multipart<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, strum_macros::Display)]
 pub enum Command<'a> {
     HeadObject,
     CopyObject {

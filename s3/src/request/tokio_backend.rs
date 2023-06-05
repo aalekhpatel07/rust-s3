@@ -21,6 +21,12 @@ pub use tokio::io::AsyncRead;
 pub use tokio::io::{AsyncWrite, AsyncWriteExt};
 pub use tokio_stream::Stream;
 
+use tracing::{
+    span,
+    Level,
+    event
+};
+
 use crate::request::request_trait::ResponseDataStream;
 
 // Temporary structure for making a request
@@ -29,7 +35,6 @@ pub struct HyperRequest<'a> {
     pub path: &'a str,
     pub command: Command<'a>,
     pub datetime: OffsetDateTime,
-    pub sync: bool,
 }
 
 #[async_trait::async_trait]
@@ -65,7 +70,26 @@ impl<'a> Request for HyperRequest<'a> {
 
             request.body(Body::from(self.request_body()))?
         };
+        let span = span!(
+            Level::DEBUG,
+            "rust-s3-async",
+            bucket = self.bucket.name(),
+            command = self.command.to_string(),
+            path = self.path,
+            second = self.datetime.second(),
+            minute = self.datetime.minute(),
+            hour = self.datetime.hour(),
+            day = self.datetime.day(),
+            month = self.datetime.month() as u8,
+            year = self.datetime.year()
+        );
+        let _enter = span.enter();
         let response = client.request(request).await?;
+
+        event!(
+            Level::DEBUG, 
+            status_code = response.status().as_u16(),
+        );
 
         if cfg!(feature = "fail-on-err") && !response.status().is_success() {
             let status = response.status().as_u16();
@@ -168,7 +192,6 @@ impl<'a> HyperRequest<'a> {
             path,
             command,
             datetime: OffsetDateTime::now_utc(),
-            sync: false,
         })
     }
 }

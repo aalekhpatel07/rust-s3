@@ -1,6 +1,6 @@
 [package]
 name = "rust-s3-async"
-version = "0.34.0"
+version = "0.35.0"
 authors = ["Drazen Urch", "Aalekh Patel <aalekh.gwpeck.7998@icloud.com>"]
 description = "Rust library for working with AWS S3 and compatible object storage APIs"
 repository = "https://github.com/aalekhpatel07/rust-s3-async"
@@ -53,7 +53,7 @@ hyper = { version = "^0.14", default-features = false, features = [
 ] }
 hyper-tls = { version = "0.5.0", default-features = false }
 hyper-native-tls = { version = "0.3.0", default-features = false }
-log = "0.4"
+tracing = { version="0.1.35" }
 md5 = "0.7"
 percent-encoding = "2"
 serde = { version = "1", features = ["derive"]}
@@ -69,6 +69,7 @@ tokio-stream = { version = "0.1" }
 url = "2"
 minidom = { version = "0.15" }
 bytes = { version = "1" }
+strum_macros = "0.24.3"
 
 [features]
 default = ["fail-on-err", "aws-creds/native-tls"]
