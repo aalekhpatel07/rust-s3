@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Tag {
     pub(crate) key: String,

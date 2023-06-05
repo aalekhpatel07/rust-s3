@@ -6,13 +6,9 @@ use crate::{bucket::CHUNK_SIZE, serde_types::HeadObjectResult};
 
 use std::fs::File;
 
+use crate::request::{AsyncRead, AsyncReadExt};
 use std::io::Read;
 use std::path::Path;
-use crate::request::{
-    AsyncRead, 
-    AsyncReadExt
-};
-
 
 pub struct PutStreamResponse {
     status_code: u16,

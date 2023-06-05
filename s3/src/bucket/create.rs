@@ -1,16 +1,18 @@
 use crate::bucket::Bucket;
-use crate::request::RequestImpl;
-use awscreds::Credentials;
-use awsregion::Region;
-use http::HeaderMap;
-use crate::BucketConfiguration;
 use crate::command::Command;
 use crate::error::S3Error;
 use crate::request::Request;
-use std::{sync::{Arc, RwLock}, collections::HashMap};
+use crate::request::RequestImpl;
+use crate::BucketConfiguration;
+use awscreds::Credentials;
+use awsregion::Region;
+use http::HeaderMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use super::DEFAULT_REQUEST_TIMEOUT;
-
 
 #[allow(dead_code)]
 pub struct CreateBucketResponse {
@@ -25,9 +27,22 @@ impl CreateBucketResponse {
     }
 }
 
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
     /// Create a new `Bucket` and instantiate it
     ///
@@ -82,7 +97,6 @@ impl Bucket {
         })
     }
 
-
     /// Create a new `Bucket` with path style and instantiate it
     ///
     /// ```no_run
@@ -136,7 +150,6 @@ impl Bucket {
         })
     }
 
-
     /// Instantiate an existing `Bucket`.
     ///
     /// # Example
@@ -187,5 +200,4 @@ impl Bucket {
             listobjects_v2: true,
         })
     }
-
 }

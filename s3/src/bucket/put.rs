@@ -1,31 +1,30 @@
 use crate::bucket::{
-    Bucket,
-    Request,
-    Read,
-    CHUNK_SIZE,
-    error_from_response_data,
-    CompleteMultipartUploadData,
-    InitiateMultipartUploadResponse,
-    Part,
-};
-use crate::error::S3Error;
-use crate::request::{
-    AsyncRead,
-    RequestImpl,
-    ResponseData,
+    error_from_response_data, Bucket, CompleteMultipartUploadData, InitiateMultipartUploadResponse,
+    Part, Read, Request, CHUNK_SIZE,
 };
 use crate::command::{Command, Multipart};
+use crate::error::S3Error;
+use crate::request::{AsyncRead, RequestImpl, ResponseData};
 
-use crate::bucket::{
-    CorsConfiguration, 
-    PutStreamResponse
-};
+use crate::bucket::{CorsConfiguration, PutStreamResponse};
 
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
-
     #[maybe_async::maybe_async]
     pub async fn put_bucket_cors(
         &self,
@@ -37,7 +36,6 @@ impl Bucket {
         let request = RequestImpl::new(self, "?cors", command)?;
         request.response_data(false).await
     }
-
 
     /// Stream file from local path to s3, generic over T: Write.
     ///
@@ -520,7 +518,6 @@ impl Bucket {
         complete_request.response_data(false)
     }
 
-
     /// Put into an S3 bucket, with explicit content-type.
     ///
     /// # Example:
@@ -613,7 +610,6 @@ impl Bucket {
             .await
     }
 
-
     /// Tag an S3 object.
     ///
     /// # Example:
@@ -657,7 +653,6 @@ impl Bucket {
         let request = RequestImpl::new(self, path, command)?;
         request.response_data(false).await
     }
-
 
     /// Abort a running multipart upload.
     ///
@@ -707,5 +702,4 @@ impl Bucket {
             ))
         }
     }
-
 }

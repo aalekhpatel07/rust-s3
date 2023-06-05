@@ -2,11 +2,23 @@ use crate::bucket::*;
 use crate::command::Command;
 use crate::request::RequestImpl;
 
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
-
     /// Head object from S3.
     ///
     /// # Example:

@@ -1,12 +1,25 @@
 use crate::bucket::Bucket;
-use crate::request::RequestImpl;
-use crate::error::S3Error;
 use crate::command::Command;
+use crate::error::S3Error;
+use crate::request::RequestImpl;
 use crate::request::{Request, ResponseData};
 
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
     /// Delete existing `Bucket`
     ///
@@ -85,7 +98,6 @@ impl Bucket {
         request.response_data(false).await
     }
 
-
     /// Delete tags from an S3 object.
     ///
     /// # Example:
@@ -127,5 +139,4 @@ impl Bucket {
         let request = RequestImpl::new(self, path.as_ref(), command)?;
         request.response_data(false).await
     }
-
 }

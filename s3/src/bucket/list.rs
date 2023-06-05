@@ -1,20 +1,29 @@
 use crate::bucket::Bucket;
-use crate::request::RequestImpl;
-use awscreds::Credentials;
-use awsregion::Region;
 use crate::command::Command;
 use crate::error::S3Error;
 use crate::request::Request;
-use crate::serde_types::{
-    ListBucketResult,
-    ListMultipartUploadsResult
-};
+use crate::request::RequestImpl;
+use crate::serde_types::{ListBucketResult, ListMultipartUploadsResult};
+use awscreds::Credentials;
+use awsregion::Region;
 
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
-
     /// Get a list of all existing buckets in the region
     /// that are accessible by the given credentials.
     /// ```no_run
@@ -57,11 +66,8 @@ impl Bucket {
         let request = RequestImpl::new(&dummy_bucket, "", Command::ListBuckets)?;
         let response = request.response_data(false).await?;
 
-        Ok(quick_xml::de::from_str::<
-            crate::bucket::ListBucketsResponse,
-        >(response.as_str()?)?)
+        Ok(quick_xml::de::from_str::<crate::bucket::ListBucketsResponse>(response.as_str()?)?)
     }
-
 
     /// Determine whether the instantiated bucket exists.
     /// ```no_run
@@ -287,11 +293,7 @@ impl Bucket {
 
         Ok(results)
     }
-
-
 }
-
-
 
 #[derive(Clone, Default, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase", rename = "ListAllMyBucketsResult")]

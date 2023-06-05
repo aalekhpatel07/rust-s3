@@ -18,11 +18,10 @@ use crate::error::S3Error;
 
 use tokio_stream::StreamExt;
 
-
-pub use tokio_stream::Stream;
 pub use crate::request::tokio_backend::HyperRequest as RequestImpl;
-pub use tokio::io::{AsyncWrite, AsyncWriteExt};
 pub use tokio::io::AsyncRead;
+pub use tokio::io::{AsyncWrite, AsyncWriteExt};
+pub use tokio_stream::Stream;
 
 use crate::request::ResponseDataStream;
 

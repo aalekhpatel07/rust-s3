@@ -1,14 +1,26 @@
-use crate::bucket::{Bucket, validate_expiry, Request};
-use crate::request::RequestImpl;
+use crate::bucket::{validate_expiry, Bucket, Request};
 use crate::command::Command;
 use crate::error::S3Error;
-use std::collections::HashMap;
+use crate::request::RequestImpl;
 use http::header::HeaderMap;
+use std::collections::HashMap;
 
-
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
     /// Get a presigned url for getting object on a given path
     ///

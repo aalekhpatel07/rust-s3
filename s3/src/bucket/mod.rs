@@ -1,16 +1,14 @@
 mod presign;
-use std::sync::{Arc, RwLock};
+use crate::error::S3Error;
 use awscreds::Credentials;
 use awsregion::Region;
 use http::HeaderMap;
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
-use crate::error::S3Error;
-
 
 #[cfg(feature = "blocking")]
 pub(crate) use block_on_proc::block_on;
-
 
 pub use std::io::Read;
 
@@ -48,14 +46,12 @@ pub use utils::*;
 
 pub type Query = HashMap<String, String>;
 
-
 pub use crate::serde_types::{
     BucketLocationResult, CompleteMultipartUploadData, CorsConfiguration, HeadObjectResult,
     InitiateMultipartUploadResponse, ListBucketResult, ListMultipartUploadsResult, Part,
 };
 pub(crate) use crate::utils::error_from_response_data;
 pub use crate::utils::PutStreamResponse;
-
 
 pub use crate::request::Request;
 
@@ -87,7 +83,6 @@ pub struct Bucket {
     listobjects_v2: bool,
 }
 
-
 const DEFAULT_REQUEST_TIMEOUT: Option<Duration> = Some(Duration::from_secs(60));
 
 fn validate_expiry(expiry_secs: u32) -> Result<(), S3Error> {
@@ -97,9 +92,7 @@ fn validate_expiry(expiry_secs: u32) -> Result<(), S3Error> {
     Ok(())
 }
 
-
 impl Bucket {
-
     pub fn with_path_style(&self) -> Self {
         Self {
             name: self.name.clone(),
@@ -185,7 +178,4 @@ impl Bucket {
         s.push_str("</TagSet></Tagging>");
         s
     }
-
 }
-
-

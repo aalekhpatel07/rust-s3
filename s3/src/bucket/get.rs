@@ -1,15 +1,26 @@
 use crate::bucket::{Bucket, Request, Tag};
-use crate::request::{RequestImpl, AsyncWrite};
 use crate::command::Command;
 use crate::error::S3Error;
+use crate::request::{AsyncWrite, RequestImpl};
 use crate::request::{ResponseData, ResponseDataStream};
 
-
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
-
     /// Gets file from an S3 path.
     ///
     /// # Example:
@@ -47,7 +58,6 @@ impl Bucket {
         let request = RequestImpl::new(self, path.as_ref(), command)?;
         request.response_data(false).await
     }
-
 
     /// Gets torrent from an S3 path.
     ///
@@ -317,7 +327,6 @@ impl Bucket {
         &self,
         path: S,
     ) -> Result<ResponseDataStream, S3Error> {
-
         let command = Command::GetObject;
         let request = RequestImpl::new(self, path.as_ref(), command)?;
         request.response_data_to_stream().await
@@ -372,14 +381,15 @@ impl Bucket {
 
             // Add namespace if it doesn't exist
             let ns = "http://s3.amazonaws.com/doc/2006-03-01/";
-            let result_string =
-                if let Err(minidom::Error::MissingNamespace) = result_string.parse::<minidom::Element>() {
-                    result_string
-                        .replace("<Tagging>", &format!("<Tagging xmlns=\"{}\">", ns))
-                        .into()
-                } else {
-                    result_string
-                };
+            let result_string = if let Err(minidom::Error::MissingNamespace) =
+                result_string.parse::<minidom::Element>()
+            {
+                result_string
+                    .replace("<Tagging>", &format!("<Tagging xmlns=\"{}\">", ns))
+                    .into()
+            } else {
+                result_string
+            };
 
             if let Ok(tagging) = result_string.parse::<minidom::Element>() {
                 for tag_set in tagging.children() {
@@ -406,5 +416,4 @@ impl Bucket {
 
         Ok((tags, result.status_code()))
     }
-
 }

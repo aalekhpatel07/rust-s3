@@ -6,10 +6,22 @@ use crate::bucket::*;
 use crate::command::Command;
 use crate::request::RequestImpl;
 
-
-
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
     /// Get path_style field of the Bucket struct
     pub fn is_path_style(&self) -> bool {
@@ -205,7 +217,6 @@ impl Bucket {
         self.request_timeout
     }
 
-
     /// Get Bucket location.
     ///
     /// # Example:
@@ -264,5 +275,4 @@ impl Bucket {
         };
         Ok((region, response_data.status_code()))
     }
-
 }

@@ -2,9 +2,9 @@ use bytes::Bytes;
 use std::collections::HashMap;
 
 use crate::bucket::Bucket;
-use crate::request::{AsyncWrite, AsyncWriteExt};
 use crate::command::Command;
 use crate::error::S3Error;
+use crate::request::{AsyncWrite, AsyncWriteExt};
 use time::OffsetDateTime;
 
 use crate::command::HttpMethod;
@@ -147,7 +147,10 @@ impl<'a> Request for SurfRequest<'a> {
         Ok((header_map, status_code.into()))
     }
 
-    #[cfg(all(any(feature = "with-async-std", feature = "with-tokio"), not(feature = "sync")))]
+    #[cfg(all(
+        any(feature = "with-async-std", feature = "with-tokio"),
+        not(feature = "sync")
+    ))]
     async fn response_data_to_stream(&self) -> Result<ResponseDataStream, S3Error> {
         let mut response = self.response().await?;
         let status_code = response.status();

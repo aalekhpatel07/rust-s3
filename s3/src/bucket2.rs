@@ -17,7 +17,6 @@ use crate::request::ResponseDataStream;
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 
-
 #[cfg(test)]
 mod test {
 

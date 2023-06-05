@@ -8,7 +8,6 @@ mod tokio_backend;
 #[cfg(feature = "with-tokio")]
 pub use tokio_backend::*;
 
-
 #[cfg(feature = "sync")]
 mod blocking;
 #[cfg(feature = "sync")]
@@ -22,7 +21,6 @@ mod async_common;
 
 #[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
 pub use async_common::*;
-
 
 #[cfg(feature = "with-tokio")]
 pub(crate) use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};

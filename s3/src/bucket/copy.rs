@@ -1,10 +1,24 @@
 use crate::bucket::{Bucket, Request};
-use crate::request::RequestImpl;
-use crate::error::S3Error;
 use crate::command::Command;
+use crate::error::S3Error;
+use crate::request::RequestImpl;
 
-#[cfg_attr(all(not(feature = "with-async-std"), feature = "with-tokio", feature = "blocking"), block_on("tokio"))]
-#[cfg_attr(all(not(feature = "with-tokio"), feature = "with-async-std", feature = "blocking"), block_on("async-std"))]
+#[cfg_attr(
+    all(
+        not(feature = "with-async-std"),
+        feature = "with-tokio",
+        feature = "blocking"
+    ),
+    block_on("tokio")
+)]
+#[cfg_attr(
+    all(
+        not(feature = "with-tokio"),
+        feature = "with-async-std",
+        feature = "blocking"
+    ),
+    block_on("async-std")
+)]
 impl Bucket {
     /// Copy file from an S3 path, internally within the same bucket.
     ///
