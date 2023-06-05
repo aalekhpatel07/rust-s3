@@ -1,5 +1,5 @@
 use crate::error::S3Error;
-use crate::{Bucket, Region};
+use crate::Region;
 
 /// [AWS Documentation](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#CannedACL)
 #[allow(dead_code)]
@@ -186,18 +186,5 @@ impl BucketConfiguration {
             );
         }
         Ok(())
-    }
-}
-
-#[allow(dead_code)]
-pub struct CreateBucketResponse {
-    pub bucket: Bucket,
-    pub response_text: String,
-    pub response_code: u16,
-}
-
-impl CreateBucketResponse {
-    pub fn success(&self) -> bool {
-        self.response_code == 200
     }
 }

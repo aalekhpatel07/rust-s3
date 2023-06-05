@@ -1,9 +1,6 @@
 //! Simple access to Amazon Web Service's (AWS) Simple Storage Service (S3)
 #![forbid(unsafe_code)]
 
-#[macro_use]
-extern crate serde_derive;
-
 pub use awscreds as creds;
 pub use awsregion as region;
 
@@ -18,6 +15,9 @@ pub mod command;
 pub mod deserializer;
 pub mod serde_types;
 pub mod signing;
+
+#[cfg(test)]
+pub mod bucket_tests;
 
 pub mod error;
 pub mod request;

@@ -2,8 +2,6 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use hmac::Mac;
 use std::collections::HashMap;
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-use std::pin::Pin;
 use time::format_description::well_known::Rfc2822;
 use time::OffsetDateTime;
 use url::Url;
@@ -20,36 +18,12 @@ use http::header::{
 use http::HeaderMap;
 use std::fmt::Write as _;
 
-#[cfg(feature = "with-async-std")]
-use futures_util::Stream;
-
-#[cfg(feature = "with-tokio")]
-use tokio_stream::Stream;
-
 #[derive(Debug)]
 
 pub struct ResponseData {
     bytes: Bytes,
     status_code: u16,
     headers: HashMap<String, String>,
-}
-
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-pub type DataStream = Pin<Box<dyn Stream<Item = StreamItem> + Send>>;
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-pub type StreamItem = Result<Bytes, S3Error>;
-
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-pub struct ResponseDataStream {
-    pub bytes: DataStream,
-    pub status_code: u16,
-}
-
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
-impl ResponseDataStream {
-    pub fn bytes(&mut self) -> &mut DataStream {
-        &mut self.bytes
-    }
 }
 
 impl From<ResponseData> for Vec<u8> {
@@ -110,29 +84,33 @@ impl fmt::Display for ResponseData {
     }
 }
 
-#[maybe_async::maybe_async]
+use std::pin::Pin;
+
+pub type DataStream = Pin<Box<dyn futures::Stream<Item = StreamItem> + Send>>;
+pub type StreamItem = Result<bytes::Bytes, crate::error::S3Error>;
+
+pub struct ResponseDataStream {
+    pub bytes: DataStream,
+    pub status_code: u16,
+}
+
+impl ResponseDataStream {
+    pub fn bytes(&mut self) -> &mut DataStream {
+        &mut self.bytes
+    }
+}
+
+#[async_trait::async_trait]
 pub trait Request {
     type Response;
     type HeaderMap;
 
     async fn response(&self) -> Result<Self::Response, S3Error>;
     async fn response_data(&self, etag: bool) -> Result<ResponseData, S3Error>;
-    #[cfg(feature = "with-tokio")]
     async fn response_data_to_writer<T: tokio::io::AsyncWrite + Send + Unpin>(
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error>;
-    #[cfg(feature = "with-async-std")]
-    async fn response_data_to_writer<T: futures_io::AsyncWrite + Send + Unpin>(
-        &self,
-        writer: &mut T,
-    ) -> Result<u16, S3Error>;
-    #[cfg(feature = "sync")]
-    fn response_data_to_writer<T: std::io::Write + Send>(
-        &self,
-        writer: &mut T,
-    ) -> Result<u16, S3Error>;
-    #[cfg(any(feature = "with-async-std", feature = "with-tokio"))]
     async fn response_data_to_stream(&self) -> Result<ResponseDataStream, S3Error>;
     async fn response_header(&self) -> Result<(Self::HeaderMap, u16), S3Error>;
     fn datetime(&self) -> OffsetDateTime;
@@ -153,24 +131,16 @@ pub trait Request {
     }
 
     fn request_body(&self) -> Vec<u8> {
-        if let Command::PutObject { content, .. } = self.command() {
-            Vec::from(content)
-        } else if let Command::PutObjectTagging { tags } = self.command() {
-            Vec::from(tags)
-        } else if let Command::UploadPart { content, .. } = self.command() {
-            Vec::from(content)
-        } else if let Command::CompleteMultipartUpload { data, .. } = &self.command() {
-            let body = data.to_string();
-            println!("CompleteMultipartUpload: {}", body);
-            body.as_bytes().to_vec()
-        } else if let Command::CreateBucket { config } = &self.command() {
-            if let Some(payload) = config.location_constraint_payload() {
-                Vec::from(payload)
-            } else {
-                Vec::new()
-            }
-        } else {
-            Vec::new()
+        match self.command() {
+            Command::PutObject { content, .. } => Vec::from(content),
+            Command::PutObjectTagging { tags } => Vec::from(tags),
+            Command::UploadPart { content, .. } => Vec::from(content),
+            Command::CompleteMultipartUpload { data, .. } => data.to_string().as_bytes().to_vec(),
+            Command::CreateBucket { config } => config
+                .location_constraint_payload()
+                .map(Vec::from)
+                .unwrap_or_default(),
+            _ => vec![],
         }
     }
 
@@ -288,6 +258,10 @@ pub trait Request {
 
     fn url(&self) -> Result<Url, S3Error> {
         let mut url_str = self.bucket().url();
+
+        if let Command::ListBuckets { .. } = self.command() {
+            return Ok(Url::parse(&url_str)?);
+        }
 
         if let Command::CreateBucket { .. } = self.command() {
             return Ok(Url::parse(&url_str)?);

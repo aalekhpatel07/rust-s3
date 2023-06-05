@@ -3,20 +3,25 @@ extern crate md5;
 
 use bytes::Bytes;
 use futures::TryStreamExt;
-use hyper::client::HttpConnector;
 use hyper::{Body, Client};
 use hyper_tls::HttpsConnector;
-use maybe_async::maybe_async;
 use std::collections::HashMap;
 use time::OffsetDateTime;
 
-use super::request_trait::{Request, ResponseData, ResponseDataStream};
+use super::request_trait::{Request, ResponseData};
 use crate::bucket::Bucket;
 use crate::command::Command;
 use crate::command::HttpMethod;
 use crate::error::S3Error;
 
 use tokio_stream::StreamExt;
+
+pub use crate::request::tokio_backend::HyperRequest as RequestImpl;
+pub use tokio::io::AsyncRead;
+pub use tokio::io::{AsyncWrite, AsyncWriteExt};
+pub use tokio_stream::Stream;
+
+use crate::request::request_trait::ResponseDataStream;
 
 // Temporary structure for making a request
 pub struct HyperRequest<'a> {
@@ -27,7 +32,7 @@ pub struct HyperRequest<'a> {
     pub sync: bool,
 }
 
-#[maybe_async]
+#[async_trait::async_trait]
 impl<'a> Request for HyperRequest<'a> {
     type Response = http::Response<Body>;
     type HeaderMap = http::header::HeaderMap;
@@ -38,38 +43,7 @@ impl<'a> Request for HyperRequest<'a> {
             Ok(headers) => headers,
             Err(e) => return Err(e),
         };
-
-        #[cfg(any(feature = "use-tokio-native-tls", feature = "tokio-rustls-tls"))]
-        let mut tls_connector_builder = native_tls::TlsConnector::builder();
-
-        #[cfg(not(any(feature = "use-tokio-native-tls", feature = "tokio-rustls-tls")))]
-        let tls_connector_builder = native_tls::TlsConnector::builder();
-
-        if cfg!(feature = "no-verify-ssl") {
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "use-tokio-native-tls")]
-                {
-                    tls_connector_builder.danger_accept_invalid_hostnames(true);
-                }
-
-            }
-
-            cfg_if::cfg_if! {
-                if #[cfg(any(feature = "use-tokio-native-tls", feature = "tokio-rustls-tls"))]
-                {
-                    tls_connector_builder.danger_accept_invalid_certs(true);
-                }
-
-            }
-        }
-        let tls_connector = tokio_native_tls::TlsConnector::from(tls_connector_builder.build()?);
-
-        let mut http_connector = HttpConnector::new();
-        http_connector.set_connect_timeout(self.bucket.request_timeout);
-        // let https_connector = HttpsConnector::from((http_connector, tls_connector));
-
         let https_connector = HttpsConnector::new();
-
         let client = Client::builder().build::<_, hyper::Body>(https_connector);
 
         let method = match self.command.http_verb() {
@@ -91,7 +65,9 @@ impl<'a> Request for HyperRequest<'a> {
 
             request.body(Body::from(self.request_body()))?
         };
+        println!("request: {:#?}", request);
         let response = client.request(request).await?;
+        println!("response: {:#?}", response);
 
         if cfg!(feature = "fail-on-err") && !response.status().is_success() {
             let status = response.status().as_u16();
@@ -135,7 +111,6 @@ impl<'a> Request for HyperRequest<'a> {
         &self,
         writer: &mut T,
     ) -> Result<u16, S3Error> {
-        use tokio::io::AsyncWriteExt;
         let response = self.response().await?;
 
         let status_code = response.status();

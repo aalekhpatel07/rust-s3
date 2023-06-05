@@ -4,16 +4,10 @@ use crate::error::S3Error;
 use crate::request::ResponseData;
 use crate::{bucket::CHUNK_SIZE, serde_types::HeadObjectResult};
 
+use crate::request::{AsyncRead, AsyncReadExt};
 use std::fs::File;
-
 use std::io::Read;
 use std::path::Path;
-
-#[cfg(feature = "with-tokio")]
-use tokio::io::{AsyncRead, AsyncReadExt};
-
-#[cfg(feature = "with-async-std")]
-use futures::io::{AsyncRead, AsyncReadExt};
 
 pub struct PutStreamResponse {
     status_code: u16,
@@ -75,7 +69,6 @@ pub fn read_chunk<R: Read>(reader: &mut R) -> Result<Vec<u8>, S3Error> {
     Ok(chunk)
 }
 
-#[cfg(any(feature = "with-tokio", feature = "with-async-std"))]
 pub async fn read_chunk_async<R: AsyncRead + Unpin>(reader: &mut R) -> Result<Vec<u8>, S3Error> {
     let mut chunk = Vec::with_capacity(CHUNK_SIZE);
     let mut take = reader.take(CHUNK_SIZE as u64);
@@ -111,8 +104,8 @@ impl From<&http::HeaderMap> for HeadObjectResult {
             delete_marker: headers.get_and_convert("x-amz-delete-marker"),
             e_tag: headers.get_string("ETag"),
             expiration: headers.get_string("x-amz-expiration"),
-            expires: headers.get_string("Expires"),
-            last_modified: headers.get_string("Last-Modified"),
+            expires: headers.get_and_convert("Expires"),
+            last_modified: headers.get_and_convert("Last-Modified"),
             ..Default::default()
         };
         let mut values = ::std::collections::HashMap::new();
@@ -171,7 +164,7 @@ mod test {
     #[test]
     fn test_etag_large_file() {
         let path = "test_etag";
-        std::fs::remove_file(path).unwrap_or_else(|_| {});
+        std::fs::remove_file(path).unwrap_or(());
         let test: Vec<u8> = object(10_000_000);
 
         let mut file = File::create(path).unwrap();
@@ -179,7 +172,7 @@ mod test {
 
         let etag = etag_for_path(path).unwrap();
 
-        std::fs::remove_file(path).unwrap_or_else(|_| {});
+        std::fs::remove_file(path).unwrap_or(());
 
         assert_eq!(etag, "e438487f09f09c042b2de097765e5ac2-2");
     }
@@ -187,7 +180,7 @@ mod test {
     #[test]
     fn test_etag_small_file() {
         let path = "test_etag";
-        std::fs::remove_file(path).unwrap_or_else(|_| {});
+        std::fs::remove_file(path).unwrap_or(());
         let test: Vec<u8> = object(1000);
 
         let mut file = File::create(path).unwrap();
@@ -195,7 +188,7 @@ mod test {
 
         let etag = etag_for_path(path).unwrap();
 
-        std::fs::remove_file(path).unwrap_or_else(|_| {});
+        std::fs::remove_file(path).unwrap_or(());
 
         assert_eq!(etag, "8122ef1c2b2331f7986349560248cf56");
     }
