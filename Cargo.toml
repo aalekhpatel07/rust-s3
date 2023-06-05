@@ -4,3 +4,6 @@ members = [
     "aws-region",
     "aws-creds"
 ]
+
+[profile.release]
+lto = "fat"
