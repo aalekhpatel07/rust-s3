@@ -21,11 +21,7 @@ pub use tokio::io::AsyncRead;
 pub use tokio::io::{AsyncWrite, AsyncWriteExt};
 pub use tokio_stream::Stream;
 
-use tracing::{
-    span,
-    Level,
-    event
-};
+use tracing::{event, span, Level};
 
 use crate::request::request_trait::ResponseDataStream;
 
@@ -86,10 +82,7 @@ impl<'a> Request for HyperRequest<'a> {
         let _enter = span.enter();
         let response = client.request(request).await?;
 
-        event!(
-            Level::DEBUG, 
-            status_code = response.status().as_u16(),
-        );
+        event!(Level::DEBUG, status_code = response.status().as_u16(),);
 
         if cfg!(feature = "fail-on-err") && !response.status().is_success() {
             let status = response.status().as_u16();
