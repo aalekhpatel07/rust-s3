@@ -120,8 +120,6 @@ impl Bucket {
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     /// let mut output_file = File::create("output_file").expect("Unable to create file");
     /// let mut async_output_file = tokio::fs::File::create("async_output_file").await.expect("Unable to create file");
-    /// #[cfg(feature = "with-async-std")]
-    /// let mut async_output_file = async_std::fs::File::create("async_output_file").await.expect("Unable to create file");
     ///
     /// let start = 0;
     /// let end = Some(1024);
@@ -166,8 +164,6 @@ impl Bucket {
     /// let bucket = Bucket::new(bucket_name, region, credentials)?;
     /// let mut output_file = File::create("output_file").expect("Unable to create file");
     /// let mut async_output_file = tokio::fs::File::create("async_output_file").await.expect("Unable to create file");
-    /// #[cfg(feature = "with-async-std")]
-    /// let mut async_output_file = async_std::fs::File::create("async_output_file").await.expect("Unable to create file");
     ///
     /// let status_code = bucket.get_object_to_writer("/test.file", &mut async_output_file).await?;
     /// #

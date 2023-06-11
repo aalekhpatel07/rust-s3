@@ -50,7 +50,6 @@ hyper = { version = "^0.14", default-features = false, features = [
     "stream",
 ] }
 hyper-tls = { version = "0.5.0", default-features = false }
-hyper-native-tls = { version = "0.3.0", default-features = false }
 tracing = { version="0.1.35" }
 md5 = "0.7"
 percent-encoding = "2"
@@ -70,13 +69,11 @@ bytes = { version = "1" }
 strum_macros = "0.24.3"
 
 [features]
-default = ["fail-on-err", "aws-creds/native-tls"]
+default = ["aws-creds/native-tls"]
 no-verify-ssl = []
-fail-on-err = []
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "fs"] }
-async-std = { version = "1", features = ["attributes"] }
 uuid = { version = "1", features = ["v4"] }
 env_logger = "0.10"
 anyhow = "1"

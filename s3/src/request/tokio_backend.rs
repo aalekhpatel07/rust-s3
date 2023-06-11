@@ -84,7 +84,7 @@ impl<'a> Request for HyperRequest<'a> {
 
         event!(Level::DEBUG, status_code = response.status().as_u16(),);
 
-        if cfg!(feature = "fail-on-err") && !response.status().is_success() {
+        if !response.status().is_success() {
             let status = response.status().as_u16();
             let text =
                 String::from_utf8(hyper::body::to_bytes(response.into_body()).await?.into())?;
