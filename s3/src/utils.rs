@@ -187,15 +187,12 @@ mod test {
     #[test]
     fn test_etag_large_file() {
         let path = &TestFile::new(Path::new("test_etag"));
-        std::fs::remove_file(path).unwrap_or(());
         let test: Vec<u8> = object(10_000_000);
 
         let mut file = File::create(path).unwrap();
         file.write_all(&test).unwrap();
 
         let etag = etag_for_path(path).unwrap();
-
-        std::fs::remove_file(path).unwrap_or(());
 
         assert_eq!(etag, "e438487f09f09c042b2de097765e5ac2-2");
     }
