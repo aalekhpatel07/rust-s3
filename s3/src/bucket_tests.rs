@@ -171,14 +171,7 @@ mod test {
 
     #[ignore]
     #[cfg(feature = "tags")]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn test_tagging_aws() {
         let bucket = test_aws_bucket();
         let _target_tags = vec![
@@ -212,14 +205,7 @@ mod test {
 
     #[ignore]
     #[cfg(feature = "tags")]
-    #[maybe_async::test(
-        feature = "sync",
-        async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-        async(
-            all(not(feature = "sync"), feature = "with-async-std"),
-            async_std::test
-        )
-    )]
+    #[tokio::test]
     async fn test_tagging_minio() {
         let bucket = test_minio_bucket();
         let _target_tags = vec![
@@ -392,14 +378,7 @@ mod test {
 
     // Keeps failing on tokio-rustls-tls
     // #[ignore]
-    // #[maybe_async::test(
-    //     feature = "sync",
-    //     async(all(not(feature = "sync"), feature = "with-tokio"), tokio::test),
-    //     async(
-    //         all(not(feature = "sync"), feature = "with-async-std"),
-    //         async_std::test
-    //     )
-    // )]
+    // #[tokio::test]
     // async fn digital_ocean_test_put_head_get_delete_object() {
     //     put_head_get_delete_object(test_digital_ocean_bucket(), true).await;
     // }

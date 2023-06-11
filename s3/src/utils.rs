@@ -156,6 +156,29 @@ mod test {
     use std::fs::File;
     use std::io::prelude::*;
     use std::io::Cursor;
+    use std::path::Path;
+
+    struct TestFile<'a> {
+        path: &'a Path,
+    }
+
+    impl<'a> TestFile<'a> {
+        pub fn new(path: &'a Path) -> Self {
+            Self { path }
+        }
+    }
+
+    impl AsRef<Path> for TestFile<'_> {
+        fn as_ref(&self) -> &Path {
+            self.path
+        }
+    }
+
+    impl Drop for TestFile<'_> {
+        fn drop(&mut self) {
+            std::fs::remove_file(self.path).unwrap_or(());
+        }
+    }
 
     fn object(size: u32) -> Vec<u8> {
         (0..size).map(|_| 33).collect()
@@ -163,7 +186,7 @@ mod test {
 
     #[test]
     fn test_etag_large_file() {
-        let path = "test_etag";
+        let path = &TestFile::new(Path::new("test_etag"));
         std::fs::remove_file(path).unwrap_or(());
         let test: Vec<u8> = object(10_000_000);
 
@@ -179,16 +202,13 @@ mod test {
 
     #[test]
     fn test_etag_small_file() {
-        let path = "test_etag";
-        std::fs::remove_file(path).unwrap_or(());
+        let path = &TestFile::new(Path::new("test_etag"));
         let test: Vec<u8> = object(1000);
 
         let mut file = File::create(path).unwrap();
         file.write_all(&test).unwrap();
 
         let etag = etag_for_path(path).unwrap();
-
-        std::fs::remove_file(path).unwrap_or(());
 
         assert_eq!(etag, "8122ef1c2b2331f7986349560248cf56");
     }
