@@ -30,7 +30,6 @@ path = "../examples/r2-tokio.rs"
 name = "google-cloud"
 path = "../examples/gcs-tokio.rs"
 
-
 [dependencies]
 async-trait = "0.1"
 aws-creds = { version = "0.35.0", default-features = false }

@@ -1,23 +1,16 @@
-[![](https://camo.githubusercontent.com/2fee3780a8605b6fc92a43dab8c7b759a274a6cf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f72757374632d737461626c652d627269676874677265656e2e737667)](https://www.rust-lang.org/tools/install)
-<!-- [![build](https://github.com/durch/rust-s3/workflows/build/badge.svg)](https://github.com/durch/rust-s3/actions)
-[![](https://img.shields.io/crates/v/rust-s3.svg)](https://crates.io/crates/rust-s3)
-![](https://img.shields.io/crates/d/rust-s3.svg) -->
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/durch/rust-s3/blob/master/LICENSE.md)
-<!-- [![Join the chat at https://gitter.im/durch/rust-s3](https://badges.gitter.im/durch/rust-s3.svg)](https://gitter.im/durch/rust-s3?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) -->
+# ZitaneLabs/rust-s3-async
 
+![License: MIT](https://badgers.space/badge/license/MIT)
 
-> **Note**: This repository is a fork of [rust-s3](https://github.com/durch/rust-s3) but with a lot of simplifications like only tokio support with async, no blocking implementations, and next to zero macro usage. The only reason this fork exists is because the macro expansions are fairly inaccurate and make development frustrating for me. Plus, its pretty common to use async code when consuming an S3 API, so I don't feel the need of carrying all the "mutual exclusive macro" dead weights around for every minor feature.
-## rust-s3-async [docs](https://docs.rs/rust-s3-async/latest/s3/)
+## Fork notice
 
-Rust library for working with Amazon S3 or arbitrary S3 compatible APIs, fully compatible with **async/await** and `futures ^0.3`.
+This is a fork of [aalekhpatel07/rust-s3-async](https://github.com/aalekhpatel07/rust-s3-async), which is a fork of [durch/rust-s3](https://github.com/durch/rust-s3).
+
+It's used in our internal and upcoming projects, and is not intended to be used by anyone else. It's not published on crates.io, and the API is not stable.
 
 ### Intro
 
-Modest interface towards Amazon S3, as well as S3 compatible object storage APIs such as Backblaze B2, Wasabi, Yandex, Minio or Google Cloud Storage.
-Supports: `put`, `get`, `list`, `delete`, operations on `tags` and `location`, as well as `head`. 
-
-Additionally, a dedicated `presign_get` `Bucket` method is available. This means you can upload to S3, and give the link to select people without having to worry about publicly accessible files on S3. This also means that you can give people 
-a `PUT` presigned URL, meaning they can upload to a specific key in S3 for the duration of the presigned URL.
+Rust library for working with Amazon S3 or arbitrary S3 compatible APIs, fully compatible with `async/await`. Uses `tokio` under the hood.
 
 #### Quick Start
 
@@ -128,4 +121,3 @@ Each `GET` method has a `PUT` companion, and `tokio` methods are generic over `t
 [dependencies]
 rust-s3-async = "0.34.0"
 ```
-
