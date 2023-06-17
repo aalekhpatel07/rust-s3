@@ -7,7 +7,7 @@ repository = "https://github.com/ZitaneLabs/rust-s3-async"
 readme = "README.md"
 keywords = ["S3", "Wasabi", "Minio", "GCP", "R2"]
 license = "MIT"
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "s3"
