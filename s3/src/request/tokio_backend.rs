@@ -269,6 +269,30 @@ mod tests {
     }
 
     #[test]
+    fn test_path_style_url_ends_in_bucket() {
+        // Test case without bucket in URL
+        let region = "http://custom-region".parse().unwrap();
+        let bucket = Bucket::new("foo", region, fake_credentials())
+            .unwrap()
+            .with_path_style();
+        assert_eq!(bucket.url(), "http://custom-region/foo");
+
+        // Test case with bucket in URL
+        let region = "http://custom-region/foo".parse().unwrap();
+        let bucket = Bucket::new("foo", region, fake_credentials())
+            .unwrap()
+            .with_path_style();
+        assert_eq!(bucket.url(), "http://custom-region/foo");
+
+        // Just to make sure...
+        let region = "http://custom-region/foo".parse().unwrap();
+        let bucket = Bucket::new("bar", region, fake_credentials())
+            .unwrap()
+            .with_path_style();
+        assert_eq!(bucket.url(), "http://custom-region/foo/bar");
+    }
+
+    #[test]
     fn test_get_object_range_header() {
         let region = "http://custom-region".parse().unwrap();
         let bucket = Bucket::new("my-second-bucket", region, fake_credentials())

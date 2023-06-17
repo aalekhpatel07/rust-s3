@@ -66,16 +66,27 @@ impl Bucket {
     }
 
     pub fn url(&self) -> String {
-        if self.path_style {
-            format!(
-                "{}://{}/{}",
-                self.scheme(),
-                self.path_style_host(),
-                self.name()
-            )
-        } else {
-            format!("{}://{}", self.scheme(), self.subdomain_style_host())
-        }
+        let scheme = self.scheme();
+        let bucket_name = self.name();
+
+        // Build the host
+        let host = {
+            let host = self
+                .path_style
+                .then(|| self.path_style_host())
+                .unwrap_or_else(|| self.subdomain_style_host());
+
+            // Test whether the endpoint already contains the bucket name
+            let ends_with_bucket = host.ends_with(&format!("/{}", bucket_name));
+
+            // Build the host with respect to the bucket name and path style
+            (self.path_style && ends_with_bucket)
+                .then(|| host.clone())
+                .unwrap_or_else(|| format!("{host}/{bucket_name}"))
+        };
+
+        // Return the URL
+        format!("{scheme}://{host}")
     }
 
     /// Get a paths-style reference to the hostname of the S3 API endpoint.
