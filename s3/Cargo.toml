@@ -1,13 +1,12 @@
 [package]
-name = "rust-s3-async"
+name = "zitane-s3-async"
 version = "0.36.0"
-authors = ["Drazen Urch", "Aalekh Patel <aalekh.gwpeck.7998@icloud.com>"]
+authors = ["Drazen Urch", "Aalekh Patel <aalekh.gwpeck.7998@icloud.com>", "Marco Quinten <splittydev@gmail.com>"]
 description = "Rust library for working with AWS S3 and compatible object storage APIs"
-repository = "https://github.com/aalekhpatel07/rust-s3-async"
+repository = "https://github.com/ZitaneLabs/rust-s3-async"
 readme = "README.md"
 keywords = ["S3", "Wasabi", "Minio", "GCP", "R2"]
 license = "MIT"
-documentation = "https://docs.rs/aws-creds/latest/awscreds/"
 edition = "2018"
 
 [lib]
