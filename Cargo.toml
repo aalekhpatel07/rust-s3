@@ -5,5 +5,12 @@ members = [
     "aws-creds"
 ]
 
+[workspace.package]
+license = "MIT"
+
+[workspace.dependencies]
+thiserror = "1"
+env_logger = "0.10"
+
 [profile.release]
 lto = "fat"

@@ -6,7 +6,7 @@
 
 This is a fork of [aalekhpatel07/rust-s3-async](https://github.com/aalekhpatel07/rust-s3-async), which is a fork of [durch/rust-s3](https://github.com/durch/rust-s3).
 
-It's used in our internal and upcoming projects, and is not intended to be used by anyone else. It's not published on crates.io, and the API is not stable.
+It's used in our internal and upcoming projects, and is not intended to be used by anyone else.
 
 ## Introduction
 
@@ -35,7 +35,7 @@ cargo run --example google-cloud
 
 ## Features
 
-There are a lot of various features that enable a wide variety of use cases, refer to `s3/Cargo.toml` for an exhaustive list. 
+There are a lot of various features that enable a wide variety of use cases, refer to `s3/Cargo.toml` for an exhaustive list.
 
 + `default` - `tokio` runtime and a `native-tls` implementation
 + `no-verify-ssl` - disable SSL verification for endpoints, useful for custom regions
@@ -60,7 +60,6 @@ There are a lot of various features that enable a wide variety of use cases, ref
 - `get_object`
 - `get_object_stream`
 - `get_object_to_writer`
-- `get_object_tagging`
 - `put_object`
 - `put_object_with_content_type`
 - `put_object_stream`

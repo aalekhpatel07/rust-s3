@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
@@ -297,7 +298,7 @@ impl Credentials {
             .or_else(|_| Credentials::from_env())
             .or_else(|_| Credentials::from_profile(profile))
             .or_else(|_| Credentials::from_instance_metadata())
-            .or_else(|_| {
+            .map_err(|_| {
                 panic!(
                     "Could not get valid credentials from STS, ENV, Profile or Instance metadata"
                 )
@@ -367,8 +368,14 @@ impl Credentials {
         })
     }
 
+    fn home_dir() -> Option<PathBuf> {
+        env::var_os("HOME")
+            .and_then(|h| if h.is_empty() { None } else { Some(h) })
+            .map(PathBuf::from)
+    }
+
     pub fn from_profile(section: Option<&str>) -> Result<Credentials, CredentialsError> {
-        let home_dir = dirs::home_dir().ok_or(CredentialsError::HomeDir)?;
+        let home_dir = Self::home_dir().ok_or(CredentialsError::HomeDir)?;
         let profile = format!("{}/.aws/credentials", home_dir.display());
         let conf = Ini::load_from_file(profile)?;
         let section = section.unwrap_or("default");

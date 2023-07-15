@@ -1,19 +1,18 @@
 [package]
-name = "aws-region"
-version = "0.25.3"
-authors = ["Drazen Urch"]
-description = "Tiny Rust library for working with Amazon AWS regions, supports `s3` crate"
-repository = "https://github.com/durch/rust-s3"
+name = "zitane-aws-region"
+version = "0.26.0"
+authors = ["Drazen Urch", "Zitane Labs"]
+description = "Tiny Rust library for working with Amazon AWS regions"
+repository = "https://github.com/ZitaneLabs/rust-s3-async"
 readme = "README.md"
-keywords = ["Amazon", "AWS", "S3", "R2", "Minio"]
-license = "MIT"
-documentation = "https://docs.rs/aws-region/latest/awsregion/"
-edition = "2018"
+keywords = ["AWS", "S3", "Wasabi", "Minio", "R2"]
+license.workspace = true
+edition = "2021"
 
 [lib]
 name = "awsregion"
 path = "src/lib.rs"
 
 [dependencies]
-thiserror = "1"
+thiserror.workspace = true
 serde = { version = "1", features = ["derive"], optional = true }

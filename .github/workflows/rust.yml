@@ -1,38 +1,43 @@
-name: build
+name: Rust
 
 on:
+  pull_request:
   push:
-    branches: [refactor, master]
+    branches:
+      - master
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+  RUST_BACKTRACE: short
+  RUSTDOCFLAGS: -D warnings
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  rustfmt:
+    runs-on: [ubuntu-latest]
     steps:
-
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Test, Lint, and Build
-        run: |
-          make ci
-      - name: Generate docs.
-        run: |
-          make docs
-      - name: Archive generated docs for gh pages.
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: docs/
-  deploy-pages:
-    needs: build
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+      - uses: actions/checkout@v3
+      - run: rustup toolchain install stable --profile minimal
+      - run: rustup component add rustfmt
+      - run: cargo fmt --all --check
+  clippy:
+    runs-on: [ubuntu-latest]
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+      - uses: actions/checkout@v3
+      - run: rustup toolchain install stable --profile minimal
+      - run: rustup component add clippy
+      - name: cargo clippy
+        run: cargo clippy
+  test:
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup toolchain install stable --profile minimal
+      - name: cargo test
+        run: cargo test
+      - name: cargo test (all features)
+        run: cargo test --all-features
+      - name: doctests
+        run: cargo test --doc

@@ -1,0 +1,38 @@
+all-features = false
+no-default-features = false
+
+[advisories]
+db-urls = ["https://github.com/rustsec/advisory-db"]
+vulnerability = "deny"
+unmaintained = "warn"
+yanked = "warn"
+notice = "warn"
+ignore = [
+    # "RUSTSEC-0000-0000"
+]
+
+[licenses]
+unlicensed = "deny"
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "Unicode-DFS-2016", # used by unicode-ident
+    "CC0-1.0",
+    "MPL-2.0",
+]
+copyleft = "deny"
+allow-osi-fsf-free = "neither"
+default = "deny"
+
+[bans]
+skip = [
+]
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = [
+    "https://github.com/rust-lang/crates.io-index"
+]
+allow-git = []
