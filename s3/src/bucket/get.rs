@@ -297,4 +297,63 @@ impl Bucket {
 
         Ok((tags, result.status_code()))
     }
+
+    /// Get bucket versioning
+    ///
+    /// # Example:
+    ///
+    /// ```no_run
+    /// use s3::bucket::Bucket;
+    /// use s3::creds::Credentials;
+    /// use anyhow::Result;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<()> {
+    ///
+    /// let bucket_name = "rust-s3-test";
+    /// let region = "us-east-1".parse()?;
+    /// let credentials = Credentials::default()?;
+    /// let bucket = Bucket::new(bucket_name, region, credentials)?;
+    ///
+    /// let status: bool = bucket.get_bucket_versioning().await?;
+    /// #
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_bucket_versioning(&self) -> Result<bool, S3Error> {
+        let command = Command::GetBucketVersioning {};
+        let request = RequestImpl::new(self, "", command)?;
+        let result = request.response_data(false).await?;
+
+        let mut versioning = false;
+
+        if result.status_code() == 200 {
+            let result_string = String::from_utf8_lossy(result.as_slice());
+
+            // Add namespace if it doesn't exist
+            let ns = "http://s3.amazonaws.com/doc/2006-03-01/";
+            let result_string = if let Err(minidom::Error::MissingNamespace) =
+                result_string.parse::<minidom::Element>()
+            {
+                result_string
+                    .replace(
+                        "<VersioningConfig>",
+                        &format!("<VersioningConfig xmlns=\"{}\">", ns),
+                    )
+                    .into()
+            } else {
+                result_string
+            };
+
+            if let Ok(versioning_status) = result_string.parse::<minidom::Element>() {
+                if let Some(status) = versioning_status.get_child("Status", ns) {
+                    if status.text() == "Enabled" {
+                        versioning = true;
+                    }
+                }
+            }
+        }
+
+        Ok(versioning)
+    }
 }

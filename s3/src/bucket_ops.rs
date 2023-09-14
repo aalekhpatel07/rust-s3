@@ -188,3 +188,33 @@ impl BucketConfiguration {
         Ok(())
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct VersioningConfiguration(bool);
+
+impl Default for VersioningConfiguration {
+    fn default() -> Self {
+        VersioningConfiguration(false)
+    }
+}
+
+impl VersioningConfiguration {
+    pub fn new(enabled: bool) -> Self {
+        Self(enabled)
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.0
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.0 = enabled;
+    }
+
+    pub fn payload(&self) -> String {
+        format!(
+            "<VersioningConfiguration><Status>{}</Status></VersioningConfiguration>",
+            if self.0 { "Enabled" } else { "Suspended" }
+        )
+    }
+}

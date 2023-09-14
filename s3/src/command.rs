@@ -26,7 +26,7 @@ impl fmt::Display for HttpMethod {
         }
     }
 }
-use crate::bucket_ops::BucketConfiguration;
+use crate::bucket_ops::{BucketConfiguration, VersioningConfiguration};
 use http::HeaderMap;
 
 #[derive(Clone, Debug)]
@@ -132,6 +132,11 @@ pub enum Command<'a> {
     PutBucketCors {
         configuration: CorsConfiguration,
     },
+
+    GetBucketVersioning,
+    PutBucketVersioning {
+        config: VersioningConfiguration,
+    },
 }
 
 impl<'a> Command<'a> {
@@ -146,14 +151,16 @@ impl<'a> Command<'a> {
             | Command::GetBucketLocation
             | Command::GetObjectTagging
             | Command::ListMultipartUploads { .. }
-            | Command::PresignGet { .. } => HttpMethod::Get,
+            | Command::PresignGet { .. }
+            | Command::GetBucketVersioning { .. } => HttpMethod::Get,
             Command::PutObject { .. }
             | Command::CopyObject { from: _ }
             | Command::PutObjectTagging { .. }
             | Command::PresignPut { .. }
             | Command::UploadPart { .. }
             | Command::PutBucketCors { .. }
-            | Command::CreateBucket { .. } => HttpMethod::Put,
+            | Command::CreateBucket { .. }
+            | Command::PutBucketVersioning { .. } => HttpMethod::Put,
             Command::DeleteObject
             | Command::DeleteObjectTagging
             | Command::AbortMultipartUpload { .. }
@@ -180,6 +187,10 @@ impl<'a> Command<'a> {
                 } else {
                     0
                 }
+            }
+            Command::PutBucketVersioning { config } => {
+                let payload = config.payload();
+                Vec::from(payload).len()
             }
             _ => 0,
         }

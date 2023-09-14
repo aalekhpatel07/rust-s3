@@ -140,6 +140,7 @@ pub trait Request {
                 .location_constraint_payload()
                 .map(Vec::from)
                 .unwrap_or_default(),
+            Command::PutBucketVersioning { config } => config.payload().into_bytes().to_vec(),
             _ => vec![],
         }
     }
@@ -294,6 +295,7 @@ pub trait Request {
                     url_str.push_str(&multipart.query_string())
                 }
             }
+            Command::PutBucketVersioning { .. } => url_str.push_str("?versioning="),
             _ => {}
         }
 
@@ -369,6 +371,9 @@ pub trait Request {
             | Command::GetObjectTagging
             | Command::DeleteObjectTagging => {
                 url.query_pairs_mut().append_pair("tagging", "");
+            }
+            Command::PutBucketVersioning { .. } => {
+                url.query_pairs_mut().append_pair("versioning", "");
             }
             _ => {}
         }

@@ -3,6 +3,7 @@ use crate::bucket::{
     error_from_response_data, Bucket, CompleteMultipartUploadData, InitiateMultipartUploadResponse,
     Part, Read, Request, CHUNK_SIZE,
 };
+use crate::bucket_ops::VersioningConfiguration;
 use crate::command::{Command, Multipart};
 use crate::error::S3Error;
 use crate::request::{RequestImpl, ResponseData};
@@ -407,6 +408,36 @@ impl Bucket {
         let content = self._tags_xml(tags);
         let command = Command::PutObjectTagging { tags: &content };
         let request = RequestImpl::new(self, path, command)?;
+        request.response_data(false).await
+    }
+
+    /// Enable bucket versioning
+    ///
+    /// # Example:
+    ///
+    /// ```no_run
+    /// use s3::bucket::Bucket;
+    /// use s3::creds::Credentials;
+    /// use anyhow::Result;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<()> {
+    ///
+    /// let bucket_name = "rust-s3-test";
+    /// let region = "us-east-1".parse()?;
+    /// let credentials = Credentials::default()?;
+    /// let mut bucket = Bucket::new(bucket_name, region, credentials)?;
+    ///
+    /// let response_data = bucket.enable_versioning(true).await?;
+    ///
+    /// #
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn enable_versioning(&self, status: bool) -> Result<ResponseData, S3Error> {
+        let config = VersioningConfiguration::new(status);
+        let command = Command::PutBucketVersioning { config };
+        let request = RequestImpl::new(self, "", command)?;
         request.response_data(false).await
     }
 
