@@ -140,6 +140,7 @@ pub trait Request {
                 .location_constraint_payload()
                 .map(Vec::from)
                 .unwrap_or_default(),
+            Command::PutBucketVersioning { config } => config.payload().into_bytes().to_vec(),
             _ => vec![],
         }
     }
@@ -149,14 +150,7 @@ pub trait Request {
     }
 
     fn string_to_sign(&self, request: &str) -> Result<String, S3Error> {
-        match self.command() {
-            Command::PresignPost { post_policy, .. } => Ok(post_policy),
-            _ => Ok(signing::string_to_sign(
-                &self.datetime(),
-                &self.bucket().region(),
-                request,
-            )?),
-        }
+        signing::string_to_sign(&self.datetime(), &self.bucket().region(), request)
     }
 
     fn host_header(&self) -> String {
@@ -294,6 +288,7 @@ pub trait Request {
                     url_str.push_str(&multipart.query_string())
                 }
             }
+            Command::PutBucketVersioning { .. } => url_str.push_str("?versioning="),
             _ => {}
         }
 
@@ -369,6 +364,9 @@ pub trait Request {
             | Command::GetObjectTagging
             | Command::DeleteObjectTagging => {
                 url.query_pairs_mut().append_pair("tagging", "");
+            }
+            Command::PutBucketVersioning { .. } => {
+                url.query_pairs_mut().append_pair("versioning", "");
             }
             _ => {}
         }

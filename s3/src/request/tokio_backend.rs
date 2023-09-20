@@ -13,6 +13,7 @@ use crate::bucket::Bucket;
 use crate::command::Command;
 use crate::command::HttpMethod;
 use crate::error::S3Error;
+use crate::utils::now_utc;
 
 use tokio_stream::StreamExt;
 
@@ -184,7 +185,7 @@ impl<'a> HyperRequest<'a> {
             bucket,
             path,
             command,
-            datetime: OffsetDateTime::now_utc(),
+            datetime: now_utc(),
         })
     }
 }
