@@ -1,6 +1,6 @@
 [package]
 name = "zitane-s3-async"
-version = "0.37.0"
+version = "0.38.0"
 authors = ["Drazen Urch", "Aalekh Patel <aalekh.gwpeck.7998@icloud.com>", "Marco Quinten <splittydev@gmail.com>"]
 description = "Rust library for working with AWS S3 and compatible object storage APIs"
 repository = "https://github.com/ZitaneLabs/rust-s3-async"
