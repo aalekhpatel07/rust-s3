@@ -1,6 +1,7 @@
 use base64::engine::general_purpose;
 use base64::Engine;
 use hmac::Mac;
+use http::Uri;
 use std::collections::HashMap;
 use time::format_description::well_known::Rfc2822;
 use time::OffsetDateTime;
@@ -87,7 +88,7 @@ impl fmt::Display for ResponseData {
 use std::pin::Pin;
 
 pub type DataStream = Pin<Box<dyn futures::Stream<Item = StreamItem> + Send>>;
-pub type StreamItem = Result<bytes::Bytes, crate::error::S3Error>;
+pub type StreamItem = Result<hyper::body::Frame<bytes::Bytes>, hyper::Error>;
 
 pub struct ResponseDataStream {
     pub bytes: DataStream,
@@ -232,13 +233,14 @@ pub trait Request {
         expiry: u32,
         custom_headers: Option<&HeaderMap>,
         custom_queries: Option<&HashMap<String, String>>,
-    ) -> Result<Url, S3Error> {
+    ) -> Result<Uri, S3Error> {
         let bucket = self.bucket();
         let token = if let Some(security_token) = bucket.security_token()? {
             Some(security_token)
         } else {
             bucket.session_token()?
         };
+
         let url = Url::parse(&format!(
             "{}{}{}",
             self.url()?,
@@ -253,18 +255,18 @@ pub trait Request {
             &signing::flatten_queries(custom_queries)?,
         ))?;
 
-        Ok(url)
+        Ok(url.as_str().parse::<Uri>()?)
     }
 
-    fn url(&self) -> Result<Url, S3Error> {
+    fn url(&self) -> Result<Uri, S3Error> {
         let mut url_str = self.bucket().url();
 
         if let Command::ListBuckets { .. } = self.command() {
-            return Ok(Url::parse(&url_str)?);
+            return Ok(url_str.parse()?);
         }
 
         if let Command::CreateBucket { .. } = self.command() {
-            return Ok(Url::parse(&url_str)?);
+            return Ok(url_str.parse()?);
         }
 
         let path = if self.path().starts_with('/') {
@@ -373,7 +375,7 @@ pub trait Request {
             _ => {}
         }
 
-        Ok(url)
+        Ok(url.as_str().parse::<Uri>()?)
     }
 
     fn canonical_request(&self, headers: &HeaderMap) -> Result<String, S3Error> {

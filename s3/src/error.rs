@@ -18,6 +18,8 @@ pub enum S3Error {
     HmacInvalidLength(#[from] sha2::digest::InvalidLength),
     #[error("url parse: {0}")]
     UrlParse(#[from] url::ParseError),
+    #[error("uri parse: {0}")]
+    UriParse(#[from] http::uri::InvalidUri),
     #[error("io: {0}")]
     Io(#[from] std::io::Error),
     #[error("http: {0}")]

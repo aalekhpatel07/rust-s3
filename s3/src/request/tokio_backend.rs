@@ -1,24 +1,24 @@
 extern crate base64;
 extern crate md5;
 
+use bytes::Buf;
 use bytes::Bytes;
-use futures::TryStreamExt;
-use hyper::{Body, Client};
-use hyper_tls::HttpsConnector;
+use http_body_util::BodyExt;
+use http_body_util::BodyStream;
+use http_body_util::Full;
+use hyper_util::rt::TokioIo;
 use std::collections::HashMap;
+use std::io::Read;
 use time::OffsetDateTime;
+use tokio::{io::AsyncWriteExt as _, net::TcpStream};
 
-use super::request_trait::{Request, ResponseData};
+use super::request_trait::ResponseData;
 use crate::bucket::Bucket;
 use crate::command::Command;
 use crate::command::HttpMethod;
 use crate::error::S3Error;
 
-use tokio_stream::StreamExt;
-
 pub use crate::request::tokio_backend::HyperRequest as RequestImpl;
-pub use tokio::io::AsyncRead;
-pub use tokio::io::{AsyncWrite, AsyncWriteExt};
 pub use tokio_stream::Stream;
 
 use tracing::{event, span, Level};
@@ -34,18 +34,31 @@ pub struct HyperRequest<'a> {
 }
 
 #[async_trait::async_trait]
-impl<'a> Request for HyperRequest<'a> {
-    type Response = http::Response<Body>;
+impl<'a> crate::request::Request for HyperRequest<'a> {
+    type Response = http::Response<hyper::body::Incoming>;
     type HeaderMap = http::header::HeaderMap;
 
-    async fn response(&self) -> Result<http::Response<Body>, S3Error> {
-        // Build headers
+    async fn response(&self) -> Result<http::Response<hyper::body::Incoming>, S3Error> {
         let headers = match self.headers() {
             Ok(headers) => headers,
             Err(e) => return Err(e),
         };
-        let https_connector = HttpsConnector::new();
-        let client = Client::builder().build::<_, hyper::Body>(https_connector);
+
+        let url = self.url()?;
+        let host = url.host().unwrap();
+        let port = url.port_u16().unwrap_or(80);
+        let address = format!("{}:{}", host, port);
+        let stream = TcpStream::connect(&address).await?;
+
+        let io = TokioIo::new(stream);
+        let (mut sender, connection) = hyper::client::conn::http1::handshake(io).await?;
+
+        // Poll the connection
+        tokio::task::spawn(async move {
+            if let Err(err) = connection.await {
+                println!("Connection failed: {:?}", err);
+            }
+        });
 
         let method = match self.command.http_verb() {
             HttpMethod::Delete => http::Method::DELETE,
@@ -56,16 +69,21 @@ impl<'a> Request for HyperRequest<'a> {
         };
 
         let request = {
+            let authority = url.authority().unwrap().clone();
+
             let mut request = http::Request::builder()
+                .header(hyper::header::HOST, authority.as_str())
                 .method(method)
-                .uri(self.url()?.as_str());
+                .uri(url.path());
 
             for (header, value) in headers.iter() {
                 request = request.header(header, value);
             }
 
-            request.body(Body::from(self.request_body()))?
+            let bytes = Bytes::from(self.request_body());
+            request.body(Full::new(bytes))?
         };
+
         let span = span!(
             Level::DEBUG,
             "rust-s3-async",
@@ -80,14 +98,15 @@ impl<'a> Request for HyperRequest<'a> {
             year = self.datetime.year()
         );
         let _enter = span.enter();
-        let response = client.request(request).await?;
+        let response = sender.send_request(request).await?;
 
         event!(Level::DEBUG, status_code = response.status().as_u16(),);
 
         if !response.status().is_success() {
             let status = response.status().as_u16();
-            let text =
-                String::from_utf8(hyper::body::to_bytes(response.into_body()).await?.into())?;
+            let body = response.collect().await?.aggregate();
+            let mut text = String::default();
+            body.reader().read_to_string(&mut text)?;
             return Err(S3Error::HttpFailWithBody(status, text));
         }
 
@@ -117,7 +136,9 @@ impl<'a> Request for HyperRequest<'a> {
                 Bytes::from("")
             }
         } else {
-            hyper::body::to_bytes(response.into_body()).await?
+            let reader = response.collect().await?.aggregate().reader();
+            let bytes = reader.bytes().collect::<Result<Vec<_>, _>>().unwrap();
+            Bytes::from(bytes)
         };
         Ok(ResponseData::new(body_vec, status_code, response_headers))
     }
@@ -129,10 +150,13 @@ impl<'a> Request for HyperRequest<'a> {
         let response = self.response().await?;
 
         let status_code = response.status();
-        let mut stream = response.into_body().into_stream();
+        let mut stream = response.into_body();
 
-        while let Some(item) = stream.next().await {
-            writer.write_all(&item?).await?;
+        while let Some(item) = stream.frame().await {
+            let item = item?;
+            if let Some(chunk) = item.data_ref() {
+                writer.write_all(chunk).await?;
+            }
         }
 
         Ok(status_code.as_u16())
@@ -141,10 +165,9 @@ impl<'a> Request for HyperRequest<'a> {
     async fn response_data_to_stream(&self) -> Result<ResponseDataStream, S3Error> {
         let response = self.response().await?;
         let status_code = response.status();
-        let stream = response.into_body().into_stream().map_err(S3Error::Hyper);
-
+        let body_stream = BodyStream::new(response);
         Ok(ResponseDataStream {
-            bytes: Box::pin(stream),
+            bytes: Box::pin(body_stream),
             status_code: status_code.as_u16(),
         })
     }
@@ -213,7 +236,7 @@ mod tests {
         let path = "/my-first/path";
         let request = HyperRequest::new(&bucket, path, Command::GetObject).unwrap();
 
-        assert_eq!(request.url().unwrap().scheme(), "https");
+        assert_eq!(request.url().unwrap().scheme_str(), Some("https"));
 
         let headers = request.headers().unwrap();
         let host = headers.get(HOST).unwrap();
@@ -230,7 +253,7 @@ mod tests {
         let path = "/my-first/path";
         let request = HyperRequest::new(&bucket, path, Command::GetObject).unwrap();
 
-        assert_eq!(request.url().unwrap().scheme(), "https");
+        assert_eq!(request.url().unwrap().scheme_str(), Some("https"));
 
         let headers = request.headers().unwrap();
         let host = headers.get(HOST).unwrap();
@@ -245,7 +268,7 @@ mod tests {
         let path = "/my-second/path";
         let request = HyperRequest::new(&bucket, path, Command::GetObject).unwrap();
 
-        assert_eq!(request.url().unwrap().scheme(), "http");
+        assert_eq!(request.url().unwrap().scheme_str(), Some("http"));
 
         let headers = request.headers().unwrap();
         let host = headers.get(HOST).unwrap();
@@ -261,7 +284,7 @@ mod tests {
         let path = "/my-second/path";
         let request = HyperRequest::new(&bucket, path, Command::GetObject).unwrap();
 
-        assert_eq!(request.url().unwrap().scheme(), "http");
+        assert_eq!(request.url().unwrap().scheme_str(), Some("http"));
 
         let headers = request.headers().unwrap();
         let host = headers.get(HOST).unwrap();
